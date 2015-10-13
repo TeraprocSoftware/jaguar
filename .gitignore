@@ -5,7 +5,6 @@
 .project
 .classpath
 .gradle
-gradle
 .idea
 *.iml
 .apib
