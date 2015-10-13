@@ -13,8 +13,8 @@ import static org.junit.Assert.assertEquals;
 
 public class PolicyConverterTest extends AbstractConverterTest {
   private PolicyConverter underTest;
-  private List<String>
-      defaultSkippedFields = Arrays.asList("id", "application", "scope");
+  private List<String> defaultSkippedFields = Arrays.asList(
+    "id", "application", "scope");
 
   @Before
   public void setup() {

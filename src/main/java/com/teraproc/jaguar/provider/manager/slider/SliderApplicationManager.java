@@ -215,10 +215,8 @@ public class SliderApplicationManager implements ApplicationManager {
       desiredCount = current + scalingAdjustment;
       break;
     case DELTA_PERCENTAGE:
-      desiredCount = current
-          + (int) (ceil(
-          current * ((double) scalingAdjustment
-              / MAX_CAPACITY)));
+      desiredCount = current + (int) (ceil(
+          current * ((double) scalingAdjustment / MAX_CAPACITY)));
       break;
     case EXACT:
       desiredCount = capability.getAdjustment();
