@@ -1,0 +1,172 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.0.2.RELEASE")
+        classpath "com.smokejumperit.gradle.license:Gradle-License-Report:0.0.2"
+    }
+}
+
+def env = project.hasProperty('env') ? project.getProperty('env') : 'local'
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+apply plugin: 'spring-boot'
+apply plugin: 'maven'
+apply plugin: 'checkstyle'
+apply plugin: 'jacoco'
+apply plugin: 'sonar-runner'
+apply plugin: 'license-report'
+
+sourceCompatibility = 1.7
+group = 'com.teraproc'
+
+allprojects {
+    apply from: "$rootDir/gradle/versioning.gradle"
+    ext.config = new ConfigSlurper(env).parse(file("$rootDir/gradle/config/buildConfig.groovy").toURL())
+}
+
+jar { baseName = 'jaguar' }
+
+configurations {
+    deployerJars
+    all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+    all*.exclude group: 'log4j'
+}
+
+repositories {
+    mavenCentral()
+    maven { url "http://mvnrepository.com/" }
+}
+
+dependencies {
+    compile("org.springframework.boot:spring-boot-starter-web:1.0.2.RELEASE")
+    compile("org.springframework.security:spring-security-web:3.2.3.RELEASE")
+    compile("org.springframework.security.oauth:spring-security-oauth2:2.0.3.RELEASE")
+    compile("org.springframework.boot:spring-boot-starter-data-jpa:1.0.2.RELEASE")
+    compile("org.springframework:spring-context-support:4.0.3.RELEASE")
+    compile("org.apache.commons:commons-lang3:3.3.2")
+    compile("org.hsqldb:hsqldb:2.3.2")
+    compile("org.apache.hadoop:hadoop-yarn-client:${hadoopVersion}")
+    compile("org.apache.hadoop:hadoop-yarn-server-resourcemanager:${hadoopVersion}")
+    compile("org.apache.hadoop:hadoop-common:${hadoopVersion}")
+    compile("org.apache.slider:slider-core:0.61.0-incubating")
+    compile("javax.servlet:javax.servlet-api:3.0.1")
+    compile("org.freemarker:freemarker:2.3.20")
+    compile("javax.mail:mail:1.4.7")
+    compile("org.apache.httpcomponents:httpclient:4.3.5")
+    compile("joda-time:joda-time:2.5")
+    compile("net.sf.ehcache:ehcache:2.8.3")
+    compile("org.postgresql:postgresql:9.3-1101-jdbc41")
+    compile("org.hibernate:hibernate-validator:5.1.1.Final")
+    compile("org.quartz-scheduler:quartz:2.2.1")
+    compile('org.springframework.boot:spring-boot-actuator:1.0.2.RELEASE')
+    compile("org.elasticsearch:elasticsearch:1.7.1")
+    compile("net.java.dev.jna:jna:4.1.0")
+    testCompile("junit:junit:4.11")
+    testCompile("org.mockito:mockito-all:1.9.5")
+    testCompile("org.springframework:spring-test:4.0.2.RELEASE")
+    deployerJars 'org.springframework.build.aws:org.springframework.build.aws.maven:3.0.0.RELEASE'
+}
+
+springBoot { mainClass = "JaguarApplication" }
+
+checkstyleMain {
+    ignoreFailures = false
+    configProperties = ['config_loc': "$projectDir/config/checkstyle"]
+}
+
+checkstyleTest {
+    ignoreFailures = false
+    configProperties = ['config_loc': "$projectDir/config/checkstyle"]
+}
+
+test {
+    include 'com/teraproc/**'
+    testLogging.showStandardStreams = true
+    ignoreFailures = false
+    beforeTest { descriptor ->
+        logger.lifecycle("Running test: " + descriptor)
+    }
+    onOutput { descriptor, event ->
+        logger.lifecycle("Test: " + descriptor + " produced standard out/err: " + event.message)
+    }
+    jacoco {
+        append = false
+        destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
+        classDumpFile = file("$buildDir/jacoco/classpathdumps")
+    }
+}
+
+jacoco {
+    toolVersion = "0.6.2.201302030002"
+    reportsDir = file("$buildDir/reports/jacoco")
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled false
+        csv.enabled false
+        html.destination "${buildDir}/jacocoHtml"
+    }
+}
+
+sonarRunner {
+    sonarProperties {
+        property "sonar.host.url", "$config.sonar_host_url"
+        property "sonar.jdbc.url", "$config.sonar_jdbc_url"
+        property "sonar.jdbc.driverClassName", "com.mysql.jdbc.Driver"
+        property "sonar.jdbc.username", "$System.env.SONAR_USERNAME"
+        property "sonar.jdbc.password", "$System.env.SONAR_PASSWORD"
+        property "project.reporting.outputEncoding", "UTF-8"
+        property "sonar.projectKey", "jaguar"
+        property "sonar.projectName", "jaguar"
+    }
+}
+
+
+task wrapper(type: Wrapper) { gradleVersion = "2.3" }
+
+task buildInfo(type: BuildInfoTask) {
+    destination = file("$buildDir")
+    applicationPropertiesPath = "$buildDir"
+    basename = jar.baseName
+    buildVersion = version
+}
+
+task copyScripts (type: Copy) {
+    from "src/main/resources/scripts"
+    into "build/scripts"
+}
+
+compileJava.dependsOn copyScripts
+compileJava.dependsOn buildInfo
+
+class BuildInfoTask extends DefaultTask {
+    File destination = new File("build.info")
+    String applicationPropertiesPath
+    String basename
+    String buildVersion
+
+    @TaskAction
+    def writeBuildInfo() {
+        destination.mkdirs()
+        File applicationDestination = new File(applicationPropertiesPath + "/resources/main")
+        applicationDestination.mkdirs()
+        new File(destination, "build.info").withWriter { out ->
+            [
+                    "ARTIFACT_BASENAME=" + basename,
+                    "ARTIFACT_VERSION=" + buildVersion,
+            ].each { out.println it }
+        }
+        new File(applicationDestination, "application.properties").withWriter { out ->
+            [
+                    "info.app.name=" + basename,
+                    "info.app.version=" + buildVersion
+            ].each { out.println it }
+        }
+    }
+}
