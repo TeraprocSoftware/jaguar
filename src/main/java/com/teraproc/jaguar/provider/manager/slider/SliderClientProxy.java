@@ -10,6 +10,7 @@ import org.apache.hadoop.yarn.exceptions.YarnException;
 import org.apache.slider.api.ClusterDescription;
 import org.apache.slider.client.SliderClient;
 import org.apache.slider.common.params.ActionFlexArgs;
+import org.apache.slider.common.params.ActionResizeContainerArgs;
 import org.apache.slider.core.exceptions.SliderException;
 import org.apache.slider.core.exceptions.UnknownApplicationInstanceException;
 import org.springframework.beans.factory.annotation.Value;
@@ -64,7 +65,7 @@ public class SliderClientProxy {
       final Map<String, Integer> componentsMap)
       throws YarnException, IOException, InterruptedException {
     setUsertoRunAs(user.getId());
-    ApplicationId applicationId = invokeSliderClientRunnable(
+    invokeSliderClientRunnable(
         new SliderClientContextRunnable<ApplicationId>() {
           @Override
           public ApplicationId run(SliderClient sliderClient)
@@ -84,6 +85,32 @@ public class SliderClientProxy {
         });
     LOGGER.info(
         Logger.NOT_SERVICE_RELATED, "Flexed Slider App [" + appName + "]");
+  }
+
+  public void resizeContainer(
+      final JaguarUser user, final String appName,
+      final String containerId, final int vCores, final int memory)
+      throws YarnException, IOException, InterruptedException {
+    setUsertoRunAs(user.getId());
+    invokeSliderClientRunnable(
+        new SliderClientContextRunnable<ApplicationId>() {
+          @Override
+          public ApplicationId run(SliderClient sliderClient)
+              throws YarnException,
+              IOException, InterruptedException {
+            ActionResizeContainerArgs resizeArgs =
+                new ActionResizeContainerArgs();
+            resizeArgs.parameters.add(appName);
+            resizeArgs.containers.add(containerId);
+            resizeArgs.vCores = vCores;
+            resizeArgs.memory = memory;
+            sliderClient.actionResizeContainer(appName, resizeArgs);
+            return sliderClient.applicationId;
+          }
+        });
+    LOGGER.info(
+        Logger.NOT_SERVICE_RELATED,
+        "Resized Slider App [" + appName + "] container [" + containerId + "]");
   }
 
   public boolean appExists(final JaguarUser user, final String appName)
@@ -197,15 +224,13 @@ public class SliderClientProxy {
     app.setCreateTime(description.createTime);
     app.setUpdateTime(description.updateTime);
 
-    Map<String, SliderAppComponent> componentMap =
-        new HashMap<String, SliderAppComponent>();
-    app.setComponents(componentMap);
+    // set components
     for (Map.Entry<String, Map<String, String>> e : description.roles
         .entrySet()) {
       SliderAppComponent component = new SliderAppComponent();
       component.setComponentName(e.getKey());
       app.getComponents().put(component.getComponentName(), component);
-      Map<String, String> componentsObj = (Map<String, String>) e.getValue();
+      Map<String, String> componentsObj = e.getValue();
       for (Map.Entry<String, String> comEntry : componentsObj.entrySet()) {
         if (YARN_MEMORY.equals(comEntry.getKey())) {
           component.setMemory(Integer.parseInt(comEntry.getValue()));
@@ -220,6 +245,25 @@ public class SliderClientProxy {
       }
     }
 
+    // set containers
+    Object status = description.status.get("live");
+    for (Map.Entry<String, Object> e : ((Map<String, Object>) status)
+        .entrySet()) {
+      String cmptName = e.getKey();
+      Map<String, Map<String, Object>> cmptContainers =
+          (Map<String, Map<String, Object>>) e.getValue();
+      for (Map.Entry<String, Map<String, Object>> e1 : cmptContainers
+          .entrySet()) {
+        String containerId = e1.getKey();
+        Map<ResourceType, Integer> resource = new HashMap<>();
+        resource.put(
+            ResourceType.CPU, (Integer) (e1.getValue().get("vCores")));
+        resource.put(
+            ResourceType.MEMORY, (Integer) (e1.getValue().get("memory")));
+        app.getComponents().get(cmptName).getContainers()
+            .put(containerId, resource);
+      }
+    }
     return app;
   }
 

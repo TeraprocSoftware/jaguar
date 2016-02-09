@@ -1,10 +1,12 @@
 /build
 /bin
+/libs
 /target
 .settings
 .project
 .classpath
 .gradle
+gradle
 .idea
 *.iml
 .apib

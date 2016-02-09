@@ -16,14 +16,7 @@ public class Condition {
 
   public Condition() {
     metrics = new ArrayList<>();
-    aggregates = new HashMap();
-    aggregates.put("max", new HashMap<String, Number>());
-    aggregates.put("min", new HashMap<String, Number>());
-    aggregates.put("sum", new HashMap<String, Number>());
-    aggregates.put("avg", new HashMap<String, Number>());
-    aggregates.put("any", new HashMap<String, Number>());
-    aggregates.put("first", new HashMap<String, Number>());
-    aggregates.put("last", new HashMap<String, Number>());
+    setAggregates();
   }
 
   public Condition(String expr) {
@@ -51,8 +44,15 @@ public class Condition {
     return aggregates;
   }
 
-  public void setAggregates(Map<String, Map<String, Number>> aggregates) {
-    this.aggregates = aggregates;
+  public void setAggregates() {
+    aggregates = new HashMap();
+    aggregates.put("max", new HashMap<String, Number>());
+    aggregates.put("min", new HashMap<String, Number>());
+    aggregates.put("sum", new HashMap<String, Number>());
+    aggregates.put("avg", new HashMap<String, Number>());
+    aggregates.put("any", new HashMap<String, Number>());
+    aggregates.put("first", new HashMap<String, Number>());
+    aggregates.put("last", new HashMap<String, Number>());
   }
 
   public String getComponentName() {

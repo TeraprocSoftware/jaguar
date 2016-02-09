@@ -75,18 +75,16 @@ public class ScalingRequest implements Runnable {
     context.setProperty(
         ActionProperties.PROPERTY_APPLICATION_ID,
         String.valueOf(policy.getApplication().getId()));
+    context.setProperty(
+        ActionProperties.PROPERTY_COMPONENT_NAME,
+        ((InstanceAlert) internalPolicy.getAlert()).getCondition()
+            .getComponentName());
     if (policy.getScope().equals(com.teraproc.jaguar.domain.Scope.INSTANCE)) {
-      context.setProperty(
-          ActionProperties.PROPERTY_COMPONENT_NAME,
-          ((InstanceAlert) internalPolicy.getAlert()).getComponentName());
       // TODO:
-      // The following logic is wrong, containerId got overwritten. We should
-      // most likely pass in an Action object to the performAction() function,
+      // We should most likely pass in an Action object to performAction()
       // so that we don't need to pass in a context.
-      for (String containerId : action.getTargets()) {
-        context.setProperty(
-            ActionProperties.PROPERTY_CONTAINER_ID, containerId);
-      }
+      context.setProperty(
+          ActionProperties.PROPERTY_CONTAINER_ID, action.getTarget());
     }
     return context;
   }

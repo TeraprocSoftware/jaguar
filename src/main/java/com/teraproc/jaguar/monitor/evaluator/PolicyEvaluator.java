@@ -147,10 +147,10 @@ public class PolicyEvaluator extends AbstractEventPublisher
               + "threshold '{}'",
           targets.toString(), internal.getAlert().getSuccessiveIntervals());
       for (Action action : internal.getActions()) {
-        publishInstanceScalingEvent(action, targets);
+        for (String target: targets) {
+          publishInstanceScalingEvent(action, target);
+        }
       }
-    } else {
-      clearSuccessiveIntervals(internal);
     }
   }
 
@@ -182,12 +182,11 @@ public class PolicyEvaluator extends AbstractEventPublisher
   }
 
   private void publishInstanceScalingEvent(
-      Action action, List<String> targets) {
+      Action action, String target) {
     // TODO:
     // We need to clone the action, otherwise there will be race condition
     // between this thread, and event processing thread.
-    action.getTargets().clear();
-    action.setTargets(targets);
+    action.setTarget(target);
     action.setUser(getApplication().getUser());
     action.setApplicationId(applicationId);
     action.setPolicyId(policyId);

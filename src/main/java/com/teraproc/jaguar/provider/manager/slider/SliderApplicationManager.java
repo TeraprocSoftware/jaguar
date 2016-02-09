@@ -15,12 +15,10 @@ import org.apache.hadoop.yarn.exceptions.YarnException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-
 import static java.lang.Math.ceil;
 
 @Service
@@ -120,10 +118,78 @@ public class SliderApplicationManager implements ApplicationManager {
   }
 
   private Properties scaleInstance(
-      JaguarUser user, String appName, String cmptName, String containerId,
-      long policyId, SliderActionDefinition def) {
-    // TODO: call slider to flex-up/flex-down
-    return null;
+      JaguarUser user, String appName, String cmptName, String container,
+      long policyId, SliderActionDefinition def) throws Exception {
+    Properties recordProps = new Properties();
+    recordProps.put(ActionProperties.PROPERTY_STATUS, ActionStatus.NONE);
+    SliderApp app = sliderClientProxy.getSliderApp(user, appName);
+
+    Map<ResourceType, Integer> allocated = getContainerAllocatedResource(
+        app, cmptName, container);
+    // Cannot get current resource usage from slider
+    if (allocated.size() == 0) {
+      LOGGER.warn(
+          policyId,
+          "No scaling activity due to: cannot get component instances from "
+              + "slider application");
+      return recordProps;
+    }
+
+    int allocatedCpu = allocated.get(ResourceType.CPU);
+    int allocatedMemory = allocated.get(ResourceType.MEMORY);
+    int desiredCpu = getDesiredResource(
+        def.getAdjustmentType(),
+        def.getScalingAdjustment().get(ResourceType.CPU), allocatedCpu);
+    int desiredMemory = getDesiredResource(
+        def.getAdjustmentType(),
+        def.getScalingAdjustment().get(ResourceType.MEMORY), allocatedMemory);
+
+    // resize container only if desired is more than allocated
+    if (desiredMemory == allocatedMemory) {
+      LOGGER.info(
+          policyId,
+          "No scaling activity to container '{}' due to: allocated resource "
+              + "equals to desired resource",
+          container);
+      return recordProps;
+    }
+
+    // Record manager properties
+    recordProps.put(PROPERTY_COMPONENT_NAME, cmptName);
+    recordProps
+        .put(PROPERTY_ADJUSTMENT_TYPE, def.getAdjustmentType().toString());
+    recordProps.put(
+        PROPERTY_ADJUSTMENT,
+        def.getScalingAdjustment().get(ResourceType.CPU).toString() + " "
+            + def
+            .getScalingAdjustment().get(ResourceType.MEMORY).toString());
+    recordProps.put(PROPERTY_CONTAINER_ID, container);
+    recordProps.put(
+        PROPERTY_ORIGINAL_ALLOCATED,
+        "vCore=" + allocatedCpu + " memory=" + allocatedMemory);
+    recordProps.put(
+        PROPERTY_DESIRED,
+        "vCore=" + desiredCpu + " memory=" + desiredMemory);
+
+    try {
+      LOGGER.info(
+          policyId,
+          "Sending request to resize application '{}' component '{}' "
+              + "container '{}' to vCore:'{}' memory '{}'",
+          appName, def.getComponentName(), container, desiredCpu,
+          desiredMemory);
+      sliderClientProxy.resizeContainer(
+          user, appName, container, desiredCpu, desiredMemory);
+      LOGGER.info(policyId, "Scaling manager is successfully triggered");
+      recordProps.put(
+          ActionProperties.PROPERTY_STATUS, ActionStatus.SUCCESS);
+      recordProps.put(
+          ActionProperties.PROPERTY_STATUS_REASON,
+          "Scaling successfully triggered");
+      return recordProps;
+    } catch (Exception e) {
+      throw new ActionException(e.getMessage(), e.getCause());
+    }
   }
 
   private Properties scaleApplication(
@@ -150,7 +216,7 @@ public class SliderApplicationManager implements ApplicationManager {
         "Application '{}' component '{}' current instances: allocated '{}', "
             + "requested '{}'"
         , appName, def.getComponentName(), allocated, requested);
-    int desired = getDesiredInstanceCount(
+    int desired = getDesiredResource(
         def.getAdjustmentType(),
         def.getScalingAdjustment().get(ResourceType.COUNT), allocated);
     // Trigger manager if the desired resource is less than outstanding request
@@ -206,29 +272,29 @@ public class SliderApplicationManager implements ApplicationManager {
     }
   }
 
-  private int getDesiredInstanceCount(
+  private int getDesiredResource(
       AdjustmentType type, Capacity capability, int current) {
     int scalingAdjustment = capability.getAdjustment();
-    int desiredCount;
+    int desired;
     switch (type) {
     case DELTA_COUNT:
-      desiredCount = current + scalingAdjustment;
+      desired = current + scalingAdjustment;
       break;
     case DELTA_PERCENTAGE:
-      desiredCount = current + (int) (ceil(
+      desired = current + (int) (ceil(
           current * ((double) scalingAdjustment / MAX_CAPACITY)));
       break;
     case EXACT:
-      desiredCount = capability.getAdjustment();
+      desired = capability.getAdjustment();
       break;
     default:
-      desiredCount = current;
+      desired = current;
     }
     int minSize = capability.getMin();
     int maxSize = capability.getMax();
     return
-        desiredCount < minSize ? minSize
-            : desiredCount > maxSize ? maxSize : desiredCount;
+        desired < minSize ? minSize
+            : desired > maxSize ? maxSize : desired;
   }
 
   public static int getRequestedNum(SliderApp app, String component) {
@@ -249,5 +315,15 @@ public class SliderApplicationManager implements ApplicationManager {
       }
     }
     return -1;
+  }
+  public static Map<ResourceType, Integer> getContainerAllocatedResource(
+      SliderApp app, String component, String containerId) {
+    Map<String, Map<ResourceType, Integer>> cmptContainers =
+        app.getComponents().get(component).getContainers();
+    if (cmptContainers.containsKey(containerId)) {
+      return cmptContainers.get(containerId);
+    } else {
+      return new HashMap<>();
+    }
   }
 }

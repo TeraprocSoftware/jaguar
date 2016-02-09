@@ -169,11 +169,20 @@ public class PolicyService {
     try {
       InstanceAlert alert =
           mapper.readValue(policy.getAlertDefinition(), InstanceAlert.class);
+      if (alert.getCondition() == null
+          || alert.getCondition().getExpression() == null
+          || alert.getCondition().getComponentName() == null) {
+        throw new Exception();
+      }
+      // temp fix
+      if (alert.getCondition().getAggregates() == null) {
+        alert.getCondition().setAggregates();
+      }
       Application application = policy.getApplication();
       applicationManagers.get(application.getProvider())
           .validateApplicationComponent(
               application.getUser(), application.getName(),
-              alert.getComponentName());
+              alert.getCondition().getComponentName());
       alert.setCondition(parseConditionExpr(alert.getCondition()));
       return alert;
     } catch (Exception e) {

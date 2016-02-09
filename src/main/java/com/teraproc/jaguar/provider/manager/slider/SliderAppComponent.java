@@ -1,5 +1,8 @@
 package com.teraproc.jaguar.provider.manager.slider;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class SliderAppComponent {
 
   private String componentName;
@@ -8,6 +11,11 @@ public class SliderAppComponent {
   private int priority;
   private int requestedInstances;
   private int actualInstances;
+  private Map<String, Map<ResourceType, Integer>> containers;
+
+  public SliderAppComponent() {
+    containers = new HashMap<>();
+  }
 
   public String getComponentName() {
     return componentName;
@@ -55,5 +63,14 @@ public class SliderAppComponent {
 
   public void setActualInstances(int actualInstances) {
     this.actualInstances = actualInstances;
+  }
+
+  public Map<String, Map<ResourceType, Integer>> getContainers() {
+    return containers;
+  }
+
+  public void setContainers(
+      Map<String, Map<ResourceType, Integer>> containers) {
+    this.containers = containers;
   }
 }

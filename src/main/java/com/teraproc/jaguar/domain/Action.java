@@ -2,9 +2,6 @@ package com.teraproc.jaguar.domain;
 
 import com.teraproc.jaguar.provider.manager.ApplicationManager;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Action for framework
  */
@@ -14,14 +11,13 @@ public class Action {
   private long policyId;
   // action definition is parsed by action plugin
   private String definition;
-  private List<String> targets;
+  private String target;
   private int cooldown;
   private long lastAction;
   private ApplicationManager applicationManager;
 
   public Action(String definition) {
     this.definition = definition;
-    targets = new ArrayList<>();
   }
 
   public JaguarUser getUser() {
@@ -64,12 +60,12 @@ public class Action {
     this.definition = definition;
   }
 
-  public List<String> getTargets() {
-    return targets;
+  public String getTarget() {
+    return target;
   }
 
-  public void setTargets(List<String> targets) {
-    this.targets = targets;
+  public void setTarget(String target) {
+    this.target = target;
   }
 
   public int getCooldown() {

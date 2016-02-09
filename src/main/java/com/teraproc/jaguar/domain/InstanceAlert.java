@@ -10,6 +10,7 @@ public class InstanceAlert extends BaseAlert {
 
   public InstanceAlert() {
     latestSuccessiveIntervals = new HashMap<>();
+    condition = new Condition();
   }
 
   public String getComponentName() {

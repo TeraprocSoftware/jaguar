@@ -18,10 +18,11 @@ import static org.junit.Assert.assertNotNull;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.ArrayList;
 
 public class ElasticsearchClientProviderTest {
   private static final String HTTP_BASE_URL = "http://localhost";
@@ -145,19 +146,22 @@ public class ElasticsearchClientProviderTest {
 
   @Test
   public void TestGetInstanceMetrics() throws Exception {
+    List<String> metrics = new ArrayList();
+    metrics.add("ProcessCallTime_mean");
+    metrics.add("ProcessCallTime_num_ops");
     assertNotNull(
-      underTest.getInstanceMetrics(
-        index, type, Arrays.asList(
-          new String[]{"ProcessCallTime_mean",
-            "ProcessCallTime_num_ops"}), time_1, time_2));
+        underTest.getInstanceMetrics(
+            index, type, metrics, time_1, time_2));
 
+    metrics.clear();
+    metrics.add("ProcessCallTime_mean");
+    metrics.add("ProcessCallTime_num_ops");
+    metrics.add("QueueCallTime_mean");
+    metrics.add("QueueCallTime_num_ops");
     // < containerId, < metricName, < metricValues >>>
-    Map<String, Map<String, List<Number>>> allMetrics = underTest
-      .getInstanceMetrics(
-        index, type, Arrays.asList(
-          new String[]{"ProcessCallTime_mean",
-            "ProcessCallTime_num_ops", "QueueCallTime_mean",
-            "QueueCallTime_num_ops"}), time_1, time_2);
+    Map<String, Map<String, List<Number>>> allMetrics =
+        underTest.getInstanceMetrics(
+            index, type, metrics, time_1, time_2);
     assertEquals(4, allMetrics.size());
     assertEquals(4, allMetrics.get("container-1").size());
     assertEquals(
@@ -186,4 +190,3 @@ public class ElasticsearchClientProviderTest {
           0.0001);
   }
 }
-

@@ -1,5 +1,6 @@
 package com.teraproc.jaguar.provider.manager.slider;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class SliderApp {
@@ -10,6 +11,10 @@ public class SliderApp {
   private long updateTime;
   private int state;
   private Map<String, SliderAppComponent> components;
+
+  public SliderApp() {
+    components = new HashMap();
+  }
 
   public String getVersion() {
     return version;

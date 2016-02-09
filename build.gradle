@@ -21,7 +21,6 @@ apply plugin: 'jacoco'
 apply plugin: 'sonar-runner'
 apply plugin: 'license-report'
 
-sourceCompatibility = 1.7
 group = 'com.teraproc'
 
 allprojects {
@@ -43,6 +42,7 @@ repositories {
 }
 
 dependencies {
+    compile fileTree(dir: 'libs', excludes: ['log4j*', 'slf4j-log4j*', 'servlet-api*', 'httpclient*', 'httpcore*'], include: ['*.jar'])
     compile("org.springframework.boot:spring-boot-starter-web:1.0.2.RELEASE")
     compile("org.springframework.security:spring-security-web:3.2.3.RELEASE")
     compile("org.springframework.security.oauth:spring-security-oauth2:2.0.3.RELEASE")
@@ -50,14 +50,15 @@ dependencies {
     compile("org.springframework:spring-context-support:4.0.3.RELEASE")
     compile("org.apache.commons:commons-lang3:3.3.2")
     compile("org.hsqldb:hsqldb:2.3.2")
-    compile("org.apache.hadoop:hadoop-yarn-client:${hadoopVersion}")
-    compile("org.apache.hadoop:hadoop-yarn-server-resourcemanager:${hadoopVersion}")
-    compile("org.apache.hadoop:hadoop-common:${hadoopVersion}")
-    compile("org.apache.slider:slider-core:0.61.0-incubating")
+    //compile("org.apache.hadoop:hadoop-yarn-client:${hadoopVersion}")
+    //compile("org.apache.hadoop:hadoop-yarn-server-resourcemanager:${hadoopVersion}")
+    //compile("org.apache.hadoop:hadoop-common:${hadoopVersion}")
+    //compile("org.apache.slider:slider-core:${sliderVersion}")
     compile("javax.servlet:javax.servlet-api:3.0.1")
     compile("org.freemarker:freemarker:2.3.20")
     compile("javax.mail:mail:1.4.7")
-    compile("org.apache.httpcomponents:httpclient:4.3.5")
+    compile("org.apache.httpcomponents:httpclient:4.5.1")
+    compile("commons-httpclient:commons-httpclient:3.1")
     compile("joda-time:joda-time:2.5")
     compile("net.sf.ehcache:ehcache:2.8.3")
     compile("org.postgresql:postgresql:9.3-1101-jdbc41")
@@ -66,6 +67,7 @@ dependencies {
     compile('org.springframework.boot:spring-boot-actuator:1.0.2.RELEASE')
     compile("org.elasticsearch:elasticsearch:1.7.1")
     compile("net.java.dev.jna:jna:4.1.0")
+    compile("com.google.guava:guava:18.0")
     testCompile("junit:junit:4.11")
     testCompile("org.mockito:mockito-all:1.9.5")
     testCompile("org.springframework:spring-test:4.0.2.RELEASE")
@@ -102,7 +104,7 @@ test {
 }
 
 jacoco {
-    toolVersion = "0.6.2.201302030002"
+    toolVersion = "0.7.5.201505241946"
     reportsDir = file("$buildDir/reports/jacoco")
 }
 
