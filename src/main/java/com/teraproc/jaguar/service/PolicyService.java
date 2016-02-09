@@ -11,6 +11,8 @@ import com.teraproc.jaguar.domain.InternalPolicy;
 import com.teraproc.jaguar.domain.JaguarUser;
 import com.teraproc.jaguar.domain.Policy;
 import com.teraproc.jaguar.domain.Scope;
+import com.teraproc.jaguar.log.JaguarLoggerFactory;
+import com.teraproc.jaguar.log.Logger;
 import com.teraproc.jaguar.provider.manager.ApplicationManager;
 import com.teraproc.jaguar.repository.PolicyRepository;
 import com.teraproc.jaguar.rest.converter.PolicyConverter;
@@ -23,7 +25,6 @@ import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -34,7 +35,8 @@ import java.util.StringTokenizer;
 
 @Service
 public class PolicyService {
-
+  private static final Logger LOGGER =
+      JaguarLoggerFactory.getLogger(PolicyService.class);
   private static final String delims = "+,-,*,/,>,<,>=,<=,==,!=,(,), ";
   private static ObjectMapper mapper = new ObjectMapper();
   private static JsonFactory factory = mapper.getJsonFactory();
@@ -62,7 +64,18 @@ public class PolicyService {
       List<Policy> policies =
           policyRepository.findAllByApplication(app.getId());
       for (Policy policy : policies) {
-        this.policies.get(app.getId()).put(policy.getId(), parsePolicy(policy));
+        try {
+          this.policies.get(app.getId())
+              .put(policy.getId(), parsePolicy(policy));
+        } catch (NotFoundException e) {
+          LOGGER.warn(
+              policy.getId(),
+              "Application '{}' does not exist in slider. Please remove all the"
+                  + " policies related to '{}' and application itself from"
+                  + " Jaguar.",
+              policy.getApplication().getName(),
+              policy.getApplication().getName());
+        }
       }
     }
   }
@@ -185,6 +198,8 @@ public class PolicyService {
               alert.getCondition().getComponentName());
       alert.setCondition(parseConditionExpr(alert.getCondition()));
       return alert;
+    } catch (NotFoundException nfe) {
+      throw nfe;
     } catch (Exception e) {
       throw new InvalidFormatException(
           "Unrecognized alert format due to: " + e.getMessage(), e.getCause());
