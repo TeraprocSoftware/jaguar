@@ -83,6 +83,17 @@ public class SliderApplicationManager implements ApplicationManager {
   }
 
   @Override
+  public SliderAppState getApplicationState(JaguarUser user, String appName) {
+    try {
+      SliderApp app = sliderClientProxy.getSliderApp(user, appName);
+      return new SliderAppState(app.getState());
+    } catch (YarnException | IOException | InterruptedException e) {
+      // STATE_ORPHAN
+      return new SliderAppState(6);
+    }
+  }
+
+  @Override
   public Properties performAction(
       JaguarUser user, Properties context, String jsonDef) {
     try {

@@ -2,11 +2,11 @@ package com.teraproc.jaguar;
 
 import com.teraproc.jaguar.domain.Policy;
 import com.teraproc.jaguar.domain.Application;
-import com.teraproc.jaguar.domain.Scope;
-import com.teraproc.jaguar.domain.ActionProperties;
 import com.teraproc.jaguar.domain.JaguarUser;
 import com.teraproc.jaguar.domain.Provider;
 import com.teraproc.jaguar.domain.History;
+import com.teraproc.jaguar.domain.Scope;
+import com.teraproc.jaguar.domain.ActionProperties;
 import com.teraproc.jaguar.provider.manager.slider.SliderApp;
 import com.teraproc.jaguar.provider.manager.slider.SliderAppComponent;
 import com.teraproc.jaguar.rest.json.ApplicationJson;
@@ -39,6 +39,7 @@ public class TestUtils {
     app.setUser(new JaguarUser(DUMMY_USER));
     app.setProvider(Provider.SLIDER);
     app.setEnabled(true);
+    app.setState("LIVE");
     app.setId(1L);
     app.setName(DUMMY_APP);
     return app;
@@ -51,6 +52,7 @@ public class TestUtils {
       app.setUser(new JaguarUser(DUMMY_USER));
       app.setProvider(Provider.SLIDER);
       app.setEnabled(true);
+      app.setState("LIVE");
       app.setId(Long.valueOf(i));
       app.setName(DUMMY_APP + "_" + String.valueOf(i));
       apps.add(app);
@@ -124,7 +126,7 @@ public class TestUtils {
     json.setEnabled(true);
     json.setInterval(60);
     json.setTimezone("UTC");
-    json.setCorn("? * MON-FRI");
+    json.setCron("? * MON-FRI");
     json.setStartTime("8:00");
     json.setDuration("10H0M0S");
     json.setAlert(

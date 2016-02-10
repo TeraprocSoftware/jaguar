@@ -31,6 +31,7 @@ public class ApplicationConverter
     json.setName(application.getName());
     json.setProvider(application.getProvider());
     json.setEnabled(application.getEnabled());
+    json.setState(application.getState());
     return json;
   }
 }

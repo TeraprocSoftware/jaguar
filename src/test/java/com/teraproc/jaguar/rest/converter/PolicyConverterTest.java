@@ -37,7 +37,7 @@ public class PolicyConverterTest extends AbstractConverterTest {
   public void testUpdateConverer() throws Exception {
     Policy policy = TestUtils.getGroupPolicy();
     PolicyJson json = TestUtils.getPolicyJson();
-    json.setCorn("? * MON-SUN");
+    json.setCron("? * MON-SUN");
     Policy result = underTest.update(policy, json);
     assertAllFieldsNotNull(result);
     assertEquals(result.getId(), policy.getId());

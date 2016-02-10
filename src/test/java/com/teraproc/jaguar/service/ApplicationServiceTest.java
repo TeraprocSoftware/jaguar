@@ -5,6 +5,7 @@ import com.teraproc.jaguar.domain.Application;
 import com.teraproc.jaguar.domain.JaguarUser;
 import com.teraproc.jaguar.domain.Provider;
 import com.teraproc.jaguar.provider.manager.ApplicationManager;
+import com.teraproc.jaguar.provider.manager.slider.SliderAppState;
 import com.teraproc.jaguar.provider.manager.slider.SliderApplicationManager;
 import com.teraproc.jaguar.repository.ApplicationRepository;
 import com.teraproc.jaguar.repository.UserRepository;
@@ -19,6 +20,7 @@ import org.mockito.MockitoAnnotations;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.times;
@@ -48,6 +50,9 @@ public class ApplicationServiceTest {
   public void testCreateApplication() throws Exception {
     when(applicationManagers.get(any(Provider.class)))
         .thenReturn(Mockito.mock(SliderApplicationManager.class));
+    when(applicationManagers.get(any(Provider.class)).getApplicationState(
+            any(JaguarUser.class), anyString())).thenReturn(Mockito.mock(
+            SliderAppState.class));
     when(applicationConverter.convert(any(ApplicationJson.class)))
         .thenReturn(TestUtils.getApplication());
     when(userRepository.findOne(TestUtils.DUMMY_USER)).thenReturn(

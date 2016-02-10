@@ -46,6 +46,9 @@ public class Application {
   @Column(name = "enabled")
   private boolean enabled;
 
+  @Column(name = "state")
+  private String state;
+
   public Application() {
   }
 
@@ -91,5 +94,13 @@ public class Application {
 
   public void setEnabled(boolean enabled) {
     this.enabled = enabled;
+  }
+
+  public String getState() {
+    return state;
+  }
+
+  public void setState(String state) {
+    this.state = state;
   }
 }

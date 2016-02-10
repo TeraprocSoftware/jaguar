@@ -7,6 +7,7 @@ public class ApplicationJson implements Json {
   private String name;
   private Provider provider;
   private boolean enabled;
+  private String state;
 
   public ApplicationJson() {
   }
@@ -41,5 +42,13 @@ public class ApplicationJson implements Json {
 
   public void setEnabled(boolean enabled) {
     this.enabled = enabled;
+  }
+
+  public String getState() {
+    return state;
+  }
+
+  public void setState(String state) {
+    this.state = state;
   }
 }

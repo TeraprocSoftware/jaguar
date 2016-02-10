@@ -2,6 +2,8 @@ package com.teraproc.jaguar.monitor;
 
 import com.teraproc.jaguar.domain.Application;
 import com.teraproc.jaguar.monitor.evaluator.EvaluatorExecutor;
+import com.teraproc.jaguar.provider.manager.AppState;
+import com.teraproc.jaguar.provider.manager.slider.SliderAppState;
 import com.teraproc.jaguar.service.ApplicationService;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
@@ -21,6 +23,11 @@ public abstract class AbstractMonitor implements Monitor {
       throws JobExecutionException {
     evalContext(context);
     for (Application application : applicationService.findAllEnabled()) {
+      // ignore application not live in slider
+      AppState state = new SliderAppState(application.getState());
+      if (!state.isLive()) {
+        continue;
+      }
       EvaluatorExecutor evaluatorExecutor = applicationContext
           .getBean(getEvaluatorType().getSimpleName(), EvaluatorExecutor.class);
       evaluatorExecutor.setContext(getContext(application));
@@ -35,5 +42,4 @@ public abstract class AbstractMonitor implements Monitor {
     executorService = applicationContext.getBean(ExecutorService.class);
     applicationService = applicationContext.getBean(ApplicationService.class);
   }
-
 }

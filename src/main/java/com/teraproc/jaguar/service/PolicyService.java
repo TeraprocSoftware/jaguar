@@ -1,18 +1,19 @@
 package com.teraproc.jaguar.service;
 
-import com.teraproc.jaguar.domain.Action;
-import com.teraproc.jaguar.domain.Application;
+import com.teraproc.jaguar.domain.Scope;
 import com.teraproc.jaguar.domain.Provider;
-import com.teraproc.jaguar.domain.BaseAlert;
+import com.teraproc.jaguar.domain.Policy;
+import com.teraproc.jaguar.domain.InternalPolicy;
+import com.teraproc.jaguar.domain.Application;
 import com.teraproc.jaguar.domain.Condition;
+import com.teraproc.jaguar.domain.BaseAlert;
 import com.teraproc.jaguar.domain.GroupAlert;
 import com.teraproc.jaguar.domain.InstanceAlert;
-import com.teraproc.jaguar.domain.InternalPolicy;
 import com.teraproc.jaguar.domain.JaguarUser;
-import com.teraproc.jaguar.domain.Policy;
-import com.teraproc.jaguar.domain.Scope;
+import com.teraproc.jaguar.domain.Action;
 import com.teraproc.jaguar.log.JaguarLoggerFactory;
 import com.teraproc.jaguar.log.Logger;
+import com.teraproc.jaguar.provider.manager.AppState;
 import com.teraproc.jaguar.provider.manager.ApplicationManager;
 import com.teraproc.jaguar.repository.PolicyRepository;
 import com.teraproc.jaguar.rest.converter.PolicyConverter;
@@ -60,22 +61,28 @@ public class PolicyService {
   public void init() {
     List<Application> apps = applicationService.findAll();
     for (Application app : apps) {
-      this.policies.put(app.getId(), new HashMap<Long, InternalPolicy>());
-      List<Policy> policies =
+      // get application state from application provider
+      AppState state = applicationManagers.get(app.getProvider())
+          .getApplicationState(app.getUser(), app.getName());
+      app.setState(state.toString());
+      applicationService.save(app);
+
+      // ignore application policies if this application is not live
+      if (!state.isLive()) {
+        LOGGER.warn(
+            app.getId(),
+            "Application '{}' is not in live state. Polices related to "
+                + "application '{}' will not be evaluate. ",
+            app.getName(), app.getName());
+        app.setState(state.toString());
+        continue;
+      }
+
+      policies.put(app.getId(), new HashMap<Long, InternalPolicy>());
+      List<Policy> appPolicies =
           policyRepository.findAllByApplication(app.getId());
-      for (Policy policy : policies) {
-        try {
-          this.policies.get(app.getId())
-              .put(policy.getId(), parsePolicy(policy));
-        } catch (NotFoundException e) {
-          LOGGER.warn(
-              policy.getId(),
-              "Application '{}' does not exist in slider. Please remove all the"
-                  + " policies related to '{}' and application itself from"
-                  + " Jaguar.",
-              policy.getApplication().getName(),
-              policy.getApplication().getName());
-        }
+      for (Policy policy : appPolicies) {
+        policies.get(app.getId()).put(policy.getId(), parsePolicy(policy));
       }
     }
   }
@@ -198,8 +205,8 @@ public class PolicyService {
               alert.getCondition().getComponentName());
       alert.setCondition(parseConditionExpr(alert.getCondition()));
       return alert;
-    } catch (NotFoundException nfe) {
-      throw nfe;
+    } catch (NotFoundException e) {
+      throw e;
     } catch (Exception e) {
       throw new InvalidFormatException(
           "Unrecognized alert format due to: " + e.getMessage(), e.getCause());

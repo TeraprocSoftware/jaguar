@@ -3,6 +3,7 @@ package com.teraproc.jaguar.service;
 import com.teraproc.jaguar.domain.Application;
 import com.teraproc.jaguar.domain.JaguarUser;
 import com.teraproc.jaguar.domain.Provider;
+import com.teraproc.jaguar.provider.manager.AppState;
 import com.teraproc.jaguar.provider.manager.ApplicationManager;
 import com.teraproc.jaguar.repository.ApplicationRepository;
 import com.teraproc.jaguar.repository.UserRepository;
@@ -30,9 +31,13 @@ public class ApplicationService {
   private ApplicationConverter applicationConverter;
 
   public Application create(JaguarUser user, ApplicationJson json) {
+    Application application = applicationConverter.convert(json);
     try {
       applicationManagers.get(json.getProvider())
           .validateApplication(user, json.getName());
+      AppState state = applicationManagers.get(json.getProvider())
+          .getApplicationState(user, json.getName());
+      application.setState(state.toString());
     } catch (NotFoundException e) {
       throw e;
     } catch (Exception e) {
@@ -40,7 +45,6 @@ public class ApplicationService {
       throw new RuntimeException(e);
     }
     JaguarUser jaguarUser = createUserIfAbsent(user);
-    Application application = applicationConverter.convert(json);
     application.setUser(jaguarUser);
     application = save(application);
     return application;

@@ -12,7 +12,7 @@ public class PolicyJson implements Json {
   private boolean enabled;
   private int interval;
   private String timezone;
-  private String corn;
+  private String cron;
   @Pattern(regexp = "(([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9])",
       message = "The start time format must be hh:mm:ss")
   private String startTime;
@@ -75,12 +75,12 @@ public class PolicyJson implements Json {
     this.timezone = timezone;
   }
 
-  public String getCorn() {
-    return corn;
+  public String getCron() {
+    return cron;
   }
 
-  public void setCorn(String corn) {
-    this.corn = corn;
+  public void setCron(String cron) {
+    this.cron = cron;
   }
 
   public String getStartTime() {

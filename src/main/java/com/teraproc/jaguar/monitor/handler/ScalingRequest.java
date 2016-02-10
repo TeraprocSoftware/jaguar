@@ -9,6 +9,8 @@ import com.teraproc.jaguar.domain.Policy;
 import com.teraproc.jaguar.log.JaguarLoggerFactory;
 import com.teraproc.jaguar.log.Logger;
 import com.teraproc.jaguar.provider.manager.ActionException;
+import com.teraproc.jaguar.provider.manager.AppState;
+import com.teraproc.jaguar.service.ApplicationService;
 import com.teraproc.jaguar.service.HistoryService;
 import com.teraproc.jaguar.service.PolicyService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +31,8 @@ public class ScalingRequest implements Runnable {
   private HistoryService historyService;
   @Autowired
   private PolicyService policyService;
+  @Autowired
+  private ApplicationService applicationService;
 
   public ScalingRequest(Action action) {
     this.action = action;
@@ -52,13 +56,29 @@ public class ScalingRequest implements Runnable {
       }
       setLastScalingAction(internalPolicy.getPolicy(), definition, props);
     } catch (ActionException e) {
-      LOGGER.error(internalPolicy.getId(),
+      LOGGER.error(
+          internalPolicy.getId(),
           "Failed to execute action '{}': '{}'", definition, e);
       Properties props = new Properties();
       props.put(ActionProperties.PROPERTY_STATUS, ActionStatus.FAILED);
-      props.put(ActionProperties.PROPERTY_STATUS_REASON,
+      props.put(
+          ActionProperties.PROPERTY_STATUS_REASON,
           "Failed to trigger scaling action due to: " + e.getMessage());
       setLastScalingAction(internalPolicy.getPolicy(), definition, props);
+      AppState state = action.getApplicationManager().getApplicationState(
+          action.getUser(),
+          internalPolicy.getPolicy().getApplication().getName());
+      // update application state if it is not live
+      if (!state.isLive()) {
+        String appName = internalPolicy.getPolicy().getApplication().getName();
+        LOGGER.error(
+            internalPolicy.getId(),
+            "Application '{}' is not live. Polices related to application "
+                + "'{}' will not be evaluate.",
+            appName, appName);
+        internalPolicy.getPolicy().getApplication().setState(state.toString());
+        applicationService.save(internalPolicy.getPolicy().getApplication());
+      }
     }
   }
 

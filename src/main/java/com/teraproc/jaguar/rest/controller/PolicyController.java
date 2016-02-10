@@ -125,7 +125,7 @@ public class PolicyController {
 
   private void validatePolicyJson(PolicyJson json) {
     try {
-      DateUtils.getCronExpression("* * * " + json.getCorn());
+      DateUtils.getCronExpression("* * * " + json.getCron());
       DateUtils.getTimeZone(json.getTimezone());
     } catch (ParseException e) {
       throw new InvalidFormatException(e.getMessage(), e.getCause());

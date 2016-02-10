@@ -40,6 +40,18 @@ public interface ApplicationManager {
       throws NotFoundException;
 
   /**
+   * Query the application state
+   *
+   * @param user         the user who query the application
+   * @param appName      the name of the application
+   * @return             the application state
+   * @throws NotFoundException when the application cannot be found
+   *                           in the application manager
+   */
+  AppState getApplicationState(JaguarUser user, String appName)
+      throws NotFoundException;
+
+  /**
    * Perform an action on the application
    *
    * @param user    the user who performs the action

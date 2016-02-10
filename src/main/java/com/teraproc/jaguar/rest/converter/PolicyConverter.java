@@ -18,7 +18,7 @@ public class PolicyConverter extends AbstractConverter<PolicyJson, Policy> {
     policy.setEnabled(source.isEnabled());
     policy.setInterval(source.getInterval());
     policy.setTimeZone(source.getTimezone());
-    policy.setCron(source.getCorn());
+    policy.setCron(source.getCron());
     policy.setStartTime(source.getStartTime());
     policy.setDuration(source.getDuration());
     try {
@@ -41,7 +41,7 @@ public class PolicyConverter extends AbstractConverter<PolicyJson, Policy> {
     policy.setEnabled(source.isEnabled());
     policy.setInterval(source.getInterval());
     policy.setTimeZone(source.getTimezone());
-    policy.setCron(source.getCorn());
+    policy.setCron(source.getCron());
     policy.setStartTime(source.getStartTime());
     policy.setDuration(source.getDuration());
     try {
@@ -67,7 +67,7 @@ public class PolicyConverter extends AbstractConverter<PolicyJson, Policy> {
     json.setEnabled(source.isEnabled());
     json.setInterval(source.getInterval());
     json.setTimezone(source.getTimeZone());
-    json.setCorn(source.getCron());
+    json.setCron(source.getCron());
     json.setStartTime(source.getStartTime());
     json.setDuration(source.getDuration());
     try {

@@ -13,7 +13,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class ApplicationConverterTest extends AbstractConverterTest {
-  private List<String> defaultSkippedFields = Arrays.asList("id", "user");
+  private List<String> defaultSkippedFields =
+      Arrays.asList("id", "user", "state");
   private ApplicationConverter underTest;
 
   @Before
