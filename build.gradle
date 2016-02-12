@@ -80,14 +80,69 @@ dependencies {
 
 springBoot { mainClass = "JaguarApplication" }
 
+startScripts {
+    File unixScript = file("$buildDir/scripts/jaguar")
+    File windowsScript = file("$buildDir/scripts/jaguar.bat")
+    doLast {
+        unixScript.delete()
+        windowsScript.delete()
+        copy {
+            from "src/main/cli"
+            into "$buildDir/scripts"
+        }
+    }
+}
+
+task createDocs {
+    def docs = file("$buildDir/docs")
+    outputs.dir docs
+    doLast {
+        docs.mkdirs()
+        copy {
+            from "docs"
+            into docs
+        }
+    }
+}
+
+task createConf {
+    def conf = file("$buildDir/conf")
+    outputs.dir conf
+    doLast{
+        conf.mkdirs()
+        copy {
+            from "conf"
+            into conf
+        }
+    }
+}
+
+distributions {
+    main {
+        contents {
+            from("$buildDir/scripts") {
+                into "bin"
+            }
+            from(createConf) {
+                into "conf"
+            }
+            from(createDocs) {
+                into "docs"
+            }
+        }
+    }
+}
+
 checkstyleMain {
     ignoreFailures = false
-    configProperties = ['config_loc': "$projectDir/config/checkstyle"]
+    configFile = file("$projectDir/gradle/config/checkstyle/checkstyle.xml")
+    configProperties = ['config_loc': "$projectDir/gradle/config/checkstyle"]
 }
 
 checkstyleTest {
     ignoreFailures = false
-    configProperties = ['config_loc': "$projectDir/config/checkstyle"]
+    configFile = file("$projectDir/gradle/config/checkstyle/checkstyle.xml")
+    configProperties = ['config_loc': "$projectDir/gradle/config/checkstyle"]
 }
 
 test {
@@ -142,12 +197,6 @@ task buildInfo(type: BuildInfoTask) {
     buildVersion = version
 }
 
-task copyScripts (type: Copy) {
-    from "src/main/resources/scripts"
-    into "build/scripts"
-}
-
-compileJava.dependsOn copyScripts
 compileJava.dependsOn buildInfo
 
 class BuildInfoTask extends DefaultTask {
