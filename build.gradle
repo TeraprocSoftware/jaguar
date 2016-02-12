@@ -1,5 +1,6 @@
 buildscript {
     repositories {
+        mavenLocal()
         mavenCentral()
         jcenter()
     }
@@ -22,6 +23,7 @@ apply plugin: 'sonar-runner'
 apply plugin: 'license-report'
 
 group = 'com.teraproc'
+mainClassName = "com.teraproc.jaguar.JaguarApplication"
 
 allprojects {
     apply from: "$rootDir/gradle/versioning.gradle"
@@ -37,12 +39,18 @@ configurations {
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
     maven { url "http://mvnrepository.com/" }
 }
 
+if(hasProperty('localJars')){
+    apply from: 'dependencies-slider-local.gradle'
+} else {
+    apply from: 'dependencies-slider.gradle'
+}
+
 dependencies {
-    compile fileTree(dir: 'libs', excludes: ['log4j*', 'slf4j-log4j*', 'servlet-api*', 'httpclient*', 'httpcore*'], include: ['*.jar'])
     compile("org.springframework.boot:spring-boot-starter-web:1.0.2.RELEASE")
     compile("org.springframework.security:spring-security-web:3.2.3.RELEASE")
     compile("org.springframework.security.oauth:spring-security-oauth2:2.0.3.RELEASE")
@@ -50,10 +58,6 @@ dependencies {
     compile("org.springframework:spring-context-support:4.0.3.RELEASE")
     compile("org.apache.commons:commons-lang3:3.3.2")
     compile("org.hsqldb:hsqldb:2.3.2")
-    //compile("org.apache.hadoop:hadoop-yarn-client:${hadoopVersion}")
-    //compile("org.apache.hadoop:hadoop-yarn-server-resourcemanager:${hadoopVersion}")
-    //compile("org.apache.hadoop:hadoop-common:${hadoopVersion}")
-    //compile("org.apache.slider:slider-core:${sliderVersion}")
     compile("javax.servlet:javax.servlet-api:3.0.1")
     compile("org.freemarker:freemarker:2.3.20")
     compile("javax.mail:mail:1.4.7")
@@ -128,7 +132,6 @@ sonarRunner {
         property "sonar.projectName", "jaguar"
     }
 }
-
 
 task wrapper(type: Wrapper) { gradleVersion = "2.3" }
 

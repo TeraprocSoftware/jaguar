@@ -1,0 +1,3 @@
+dependencies {
+    compile fileTree(dir: 'libs', excludes: ['log4j*', 'slf4j-log4j*', 'servlet-api*', 'httpclient*', 'httpcore*'], include: ['*.jar'])
+}
