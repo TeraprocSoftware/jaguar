@@ -197,6 +197,16 @@ task buildInfo(type: BuildInfoTask) {
     buildVersion = version
 }
 
+compileJava {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+}
+
+compileTestJava {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+}
+
 compileJava.dependsOn buildInfo
 
 class BuildInfoTask extends DefaultTask {

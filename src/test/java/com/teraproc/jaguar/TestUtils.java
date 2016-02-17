@@ -53,7 +53,7 @@ public class TestUtils {
       app.setProvider(Provider.SLIDER);
       app.setEnabled(true);
       app.setState("LIVE");
-      app.setId(Long.valueOf(i));
+      app.setId(i);
       app.setName(DUMMY_APP + "_" + String.valueOf(i));
       apps.add(app);
     }
@@ -194,7 +194,7 @@ public class TestUtils {
 
   public static Map<String, Map<String, List<Number>>> getInstanceMetrics() {
     // < containerId, < metricName, < metricValues >>>
-    Map<String, Map<String, List<Number>>> result = new HashMap();
+    Map<String, Map<String, List<Number>>> result = new HashMap<>();
 
     Map<String, List<Number>> containerMetrics = new HashMap<>();
     containerMetrics.put(
@@ -230,7 +230,7 @@ public class TestUtils {
 
   public static Map<String, Map<String, Number>> getMetricsLatestValue() {
     // < metricName, < containerId, metricValue >>
-    Map<String, Map<String, Number>> result = new HashMap();
+    Map<String, Map<String, Number>> result = new HashMap<>();
     Map<String, Number> containerMetrics = new HashMap<>();
     containerMetrics.put("container-1", 100);
     containerMetrics.put("container-2", 200);

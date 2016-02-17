@@ -36,7 +36,7 @@ public class ElasticsearchClientProvider {
       , String component, List<String> metrics, long from, long to)
       throws Exception {
     // < containerId, < metricName, < metricValues >>>
-    Map<String, Map<String, List<Number>>> result = new HashMap();
+    Map<String, Map<String, List<Number>>> result = new HashMap<>();
     String jsonRequest =
         mapper.writeValueAsString(constructRequest(metrics, from, to));
     String jsonResponse = getMetrics(service, component, jsonRequest);
@@ -58,7 +58,7 @@ public class ElasticsearchClientProvider {
               Float.valueOf((String) entry.getValue().toArray()[0]);
           metricName = metricName.substring(METRICS_PREFIX.length());
           if (!result.containsKey(containerId)) {
-            result.put(containerId, new HashMap());
+            result.put(containerId, new HashMap<String, List<Number>>());
           }
           if (!result.get(containerId).containsKey(metricName)) {
             result.get(containerId).put(metricName, new ArrayList<Number>());
@@ -75,7 +75,7 @@ public class ElasticsearchClientProvider {
       long to)
       throws Exception {
     // < metricName, < containerId, metricValue>>
-    Map<String, Map<String, Number>> result = new HashMap();
+    Map<String, Map<String, Number>> result = new HashMap<>();
     String jsonRequest =
         mapper.writeValueAsString(constructRequest(metrics, from, to));
     String jsonResponse = getMetrics(service, component, jsonRequest);
@@ -97,7 +97,7 @@ public class ElasticsearchClientProvider {
               Float.valueOf((String) entry.getValue().toArray()[0]);
           metricName = metricName.substring(METRICS_PREFIX.length());
           if (!result.containsKey(metricName)) {
-            result.put(metricName, new HashMap());
+            result.put(metricName, new HashMap<String, Number>());
           }
           result.get(metricName).put(containerId, metricValue);
         }
@@ -169,7 +169,7 @@ public class ElasticsearchClientProvider {
   }
 
   private Filter convertMetricsToFilter(List<String> metrics) {
-    List<ExistsEntity> orCollection = new ArrayList();
+    List<ExistsEntity> orCollection = new ArrayList<>();
     for (String metric : metrics) {
       FieldEntity field = new FieldEntity();
       field.setField(metric);

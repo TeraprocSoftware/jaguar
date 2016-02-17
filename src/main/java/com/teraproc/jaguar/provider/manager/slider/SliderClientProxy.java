@@ -11,7 +11,6 @@ import org.apache.slider.api.ClusterDescription;
 import org.apache.slider.client.SliderClient;
 import org.apache.slider.common.params.ActionFlexArgs;
 import org.apache.slider.common.params.ActionResizeContainerArgs;
-import org.apache.slider.core.exceptions.SliderException;
 import org.apache.slider.core.exceptions.UnknownApplicationInstanceException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -180,9 +179,6 @@ public class SliderClientProxy {
         super.init(conf);
         try {
           initHadoopBinding();
-        } catch (SliderException e) {
-          throw new RuntimeException(
-              "Unable to automatically init Hadoop binding", e);
         } catch (Exception e) {
           throw new RuntimeException(
               "Unable to automatically init Hadoop binding", e);
@@ -190,15 +186,11 @@ public class SliderClientProxy {
       }
     };
     try {
-      Configuration sliderConf =
-          client.bindArgs(new Configuration(), new String[]{"help"});
+      Configuration sliderConf = client.bindArgs(
+          new Configuration(), (String[]) (new String[]{"help"}));
       client.init(sliderConf);
       client.start();
     } catch (Exception e) {
-      LOGGER.error(
-          Logger.NOT_SERVICE_RELATED, "Unable to create SliderClientProxy", e);
-      throw new RuntimeException(e.getMessage(), e);
-    } catch (Throwable e) {
       LOGGER.error(
           Logger.NOT_SERVICE_RELATED, "Unable to create SliderClientProxy", e);
       throw new RuntimeException(e.getMessage(), e);
@@ -208,9 +200,9 @@ public class SliderClientProxy {
 
   protected void destroySliderClient(SliderClient sliderClient) {
     sliderClient.stop();
-    sliderClient = null;
   }
 
+  @SuppressWarnings("unchecked")
   private SliderApp createSliderAppObject(ClusterDescription description) {
     if (description == null) {
       return null;
@@ -288,32 +280,30 @@ public class SliderClientProxy {
       sliderUser = UserGroupInformation.getBestUGI(null, loggedInUser);
 
       try {
-        T value = sliderUser.doAs(
+        return sliderUser.doAs(
             new PrivilegedExceptionAction<T>() {
               @Override
               public T run() throws Exception {
-                // Dynamic add slider and hadoop conf path
+                // Dynamically add slider and hadoop conf path
                 ClassLoader currentClassLoader =
                     Thread.currentThread().getContextClassLoader();
                 URLClassLoader urlClassLoader =
                     (URLClassLoader) currentClassLoader;
-                File hadoop = new File(hadoopConfDir);
-                URL hadoopUrl = hadoop.toURI().toURL();
-                File slider = new File(sliderConfDir);
-                URL sliderUrl = slider.toURI().toURL();
+                URL hadoopUrl = new File(hadoopConfDir).toURI().toURL();
+                URL sliderUrl = new File(sliderConfDir).toURI().toURL();
                 try {
-                  Class urlClass = URLClassLoader.class;
-                  Method method = urlClass
-                      .getDeclaredMethod("addURL", new Class[]{URL.class});
+                  Method method = URLClassLoader.class.getDeclaredMethod(
+                      "addURL", (Class[]) (new Class[]{URL.class}));
                   method.setAccessible(true);
-                  method.invoke(urlClassLoader, new Object[]{hadoopUrl});
-                  method.invoke(urlClassLoader, new Object[]{sliderUrl});
+                  method.invoke(
+                      urlClassLoader, (Object[]) (new URL[]{hadoopUrl}));
+                  method.invoke(
+                      urlClassLoader, (Object[]) (new URL[]{sliderUrl}));
                 } catch (Exception e) {
                   LOGGER.error(
                       Logger.NOT_SERVICE_RELATED,
                       "Failed to add slider class path");
                 }
-
                 Thread.currentThread()
                     .setContextClassLoader(currentClassLoader);
                 final SliderClient sliderClient = createSliderClient();
@@ -324,12 +314,10 @@ public class SliderClientProxy {
                 }
               }
             });
-        return value;
       } catch (UndeclaredThrowableException e) {
         Throwable cause = e.getCause();
         if (cause instanceof YarnException) {
-          YarnException ye = (YarnException) cause;
-          throw ye;
+          throw (YarnException) cause;
         }
         throw e;
       }

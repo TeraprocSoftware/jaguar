@@ -34,12 +34,10 @@ public class ElasticsearchClientProviderTest {
       HTTP_BASE_URL + ":" + HTTP_PORT;
   private static final String elasticSearchUrl =
       HTTP_BASE_URL + ":" + HTTP_PORT + "/" + index + "/" + type;
-  private static final List<String> containers = Arrays.asList(
-      new String[]{"container-1", "container-2", "container-3", "container-4"});
+  private static final List<String> containers =
+      Arrays.asList("container-1", "container-2", "container-3", "container-4");
 
-  private static ObjectMapper mapper;
   private static Node node;
-  private HttpClient httpClient;
   private ElasticsearchClientProvider underTest;
   private long time_1;
   private long time_2;
@@ -47,7 +45,7 @@ public class ElasticsearchClientProviderTest {
   private static void startElasticSearch() throws Exception {
     final String nodeName = "esnode";
 
-    Map settingsMap = new HashMap();
+    Map<String, String> settingsMap = new HashMap<>();
 
     // create all data directories under Maven build directory
     settingsMap.put("path.data", "target");
@@ -95,8 +93,8 @@ public class ElasticsearchClientProviderTest {
     underTest.setElasticsearchUrl(elasticSearchBaseUrl);
 
     // create httpClient for test
-    httpClient = new HttpClient();
-    mapper = new ObjectMapper();
+    HttpClient httpClient = new HttpClient();
+    ObjectMapper mapper = new ObjectMapper();
 
     // create collected metric values
     // 2 hosts, 2 containers, 4 metrics, 5 values of each metric
@@ -146,7 +144,7 @@ public class ElasticsearchClientProviderTest {
 
   @Test
   public void TestGetInstanceMetrics() throws Exception {
-    List<String> metrics = new ArrayList();
+    List<String> metrics = new ArrayList<>();
     metrics.add("ProcessCallTime_mean");
     metrics.add("ProcessCallTime_num_ops");
     assertNotNull(
@@ -169,7 +167,7 @@ public class ElasticsearchClientProviderTest {
 
     allMetrics = underTest.getInstanceMetrics(
         index, type, Arrays.asList(
-            new String[]{"ProcessCallTime_mean", "ProcessCallTime_num_ops"}),
+            "ProcessCallTime_mean", "ProcessCallTime_num_ops"),
         time_2, System.currentTimeMillis());
     assertEquals(4, allMetrics.size());
     assertEquals(2, allMetrics.get("container-2").size());
@@ -178,10 +176,8 @@ public class ElasticsearchClientProviderTest {
 
     // < metricName, < containerId, metricValue>>
     Map<String, Map<String, Number>> result = underTest
-      .getMetricsLatestValue(
-        index, type, Arrays.asList(
-          new String[]{"ProcessCallTime_mean",
-            "ProcessCallTime_num_ops", "QueueCallTime_mean"}), time_1, time_2);
+      .getMetricsLatestValue(index, type, Arrays.asList("ProcessCallTime_mean",
+        "ProcessCallTime_num_ops", "QueueCallTime_mean"), time_1, time_2);
     assertEquals(3, result.size());
     assertEquals(4, result.get("ProcessCallTime_mean").size());
     assertEquals(

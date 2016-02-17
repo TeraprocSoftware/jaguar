@@ -6,7 +6,7 @@ import com.teraproc.jaguar.log.Logger;
 import com.teraproc.jaguar.provider.manager.ApplicationManager;
 import freemarker.template.TemplateException;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLContextBuilder;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;

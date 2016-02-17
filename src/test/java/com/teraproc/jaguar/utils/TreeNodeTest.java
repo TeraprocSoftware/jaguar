@@ -6,12 +6,11 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 public class TreeNodeTest {
-  private TreeNode underTest;
+  private TreeNode<String> underTest;
 
   @Before
   public void setup() {
-    String root = "node-1";
-    underTest = new TreeNode(root);
+    underTest = new TreeNode<>("node-1");
   }
 
   @Test
@@ -38,12 +37,12 @@ public class TreeNodeTest {
 
   @Test
   public void testThreeLevelsTree() {
-    TreeNode child21 = underTest.addChild("node-2-1");
-    TreeNode child22 = underTest.addChild("node-2-2");
-    TreeNode child31 = new TreeNode("node-3-1");
-    TreeNode child32 = new TreeNode("node-3-2");
-    TreeNode child33 = new TreeNode("node-3-3");
-    TreeNode child34 = new TreeNode("node-3-4");
+    TreeNode<String> child21 = underTest.addChild("node-2-1");
+    TreeNode<String> child22 = underTest.addChild("node-2-2");
+    TreeNode<String> child31 = new TreeNode<>("node-3-1");
+    TreeNode<String> child32 = new TreeNode<>("node-3-2");
+    TreeNode<String> child33 = new TreeNode<>("node-3-3");
+    TreeNode<String> child34 = new TreeNode<>("node-3-4");
     child21.addChildNode(child31);
     child21.addChildNode(child32);
     child22.addChildNode(child33);
