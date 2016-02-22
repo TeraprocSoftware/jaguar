@@ -47,7 +47,6 @@ public class ScalingRequest implements Runnable {
     }
     String definition = action.getDefinition();
     try {
-      LOGGER.info(internalPolicy.getId(), "Trigger action '{}'", definition);
       Properties props = action.getApplicationManager().performAction(
           action.getUser(), buildContext(internalPolicy), definition);
       if (props.get(ActionProperties.PROPERTY_STATUS)
@@ -95,16 +94,16 @@ public class ScalingRequest implements Runnable {
     context.setProperty(
         ActionProperties.PROPERTY_APPLICATION_ID,
         String.valueOf(policy.getApplication().getId()));
-    context.setProperty(
-        ActionProperties.PROPERTY_COMPONENT_NAME,
-        ((InstanceAlert) internalPolicy.getAlert()).getCondition()
-            .getComponentName());
     if (policy.getScope().equals(com.teraproc.jaguar.domain.Scope.INSTANCE)) {
       // TODO:
       // We should most likely pass in an Action object to performAction()
       // so that we don't need to pass in a context.
       context.setProperty(
           ActionProperties.PROPERTY_CONTAINER_ID, action.getTarget());
+      context.setProperty(
+          ActionProperties.PROPERTY_COMPONENT_NAME,
+          ((InstanceAlert) internalPolicy.getAlert()).getCondition()
+              .getComponentName());
     }
     return context;
   }

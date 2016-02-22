@@ -20,11 +20,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import static java.lang.Math.ceil;
+import org.slf4j.MDC;
 
 @Service
 public class SliderApplicationManager implements ApplicationManager {
   private static final Logger LOGGER =
       JaguarLoggerFactory.getLogger(SliderApplicationManager.class);
+  private static final Logger EVENTLOGGER =
+      JaguarLoggerFactory.getLogger("EVENT_LOGGER");
   private static final String PROPERTY_COMPONENT_NAME = "component";
   private static final String PROPERTY_CONTAINER_ID = "instance";
   private static final String PROPERTY_ORIGINAL_ALLOCATED =
@@ -107,17 +110,24 @@ public class SliderApplicationManager implements ApplicationManager {
           Scope.valueOf(context.getProperty(ActionProperties.PROPERTY_SCOPE));
       SliderActionDefinition def = new ObjectMapper().readValue(
           jsonDef, SliderActionDefinition.class);
+      MDC.put(
+          "serviceId",
+          context.getProperty(ActionProperties.PROPERTY_APPLICATION_ID));
+      EVENTLOGGER.info(policyId, "Trigger action '{}'", jsonDef);
 
+      Properties rsps;
       // scale-up/scale-down instance
       if (scope.equals(Scope.INSTANCE)) {
         String containerId = context.getProperty(PROPERTY_CONTAINER_ID);
-        return scaleInstance(
+        rsps = scaleInstance(
             user, appName, cmptName, containerId, policyId, def);
       } else {
         // scale-out/scale-in application
-        return scaleApplication(
+        rsps = scaleApplication(
             user, appName, def.getComponentName(), policyId, def);
       }
+      MDC.remove("serviceId");
+      return rsps;
     } catch (Exception e) {
       throw new ActionException(e.getMessage(), e.getCause());
     }
@@ -139,25 +149,35 @@ public class SliderApplicationManager implements ApplicationManager {
         app, cmptName, container);
     // Cannot get current resource usage from slider
     if (allocated.size() == 0) {
-      LOGGER.warn(
+      EVENTLOGGER.info(
           policyId,
-          "No scaling activity due to: cannot get component instances from "
-              + "slider application");
+          "No scaling activity due to: cannot get allocated"
+              + " resource from slider,"
+              + " please check slider command \"slider status '{}'\"", appName);
       return recordProps;
     }
 
     int allocatedCpu = allocated.get(ResourceType.CPU);
     int allocatedMemory = allocated.get(ResourceType.MEMORY);
+    EVENTLOGGER.info(
+        policyId,
+        "Allocated resource to container '{}': vCore = '{}', memory = '{}'",
+        container, allocatedCpu, allocatedMemory);
+
     int desiredCpu = getDesiredResource(
         def.getAdjustmentType(),
         def.getScalingAdjustment().get(ResourceType.CPU), allocatedCpu);
     int desiredMemory = getDesiredResource(
         def.getAdjustmentType(),
         def.getScalingAdjustment().get(ResourceType.MEMORY), allocatedMemory);
+    EVENTLOGGER.info(
+        policyId,
+        "Desired resource to container '{}': vCore = '{}', memory = '{}'",
+        container, desiredCpu, desiredMemory);
 
     // resize container only if desired is more than allocated
     if (desiredMemory == allocatedMemory) {
-      LOGGER.info(
+      EVENTLOGGER.info(
           policyId,
           "No scaling activity to container '{}' due to: allocated resource "
               + "equals to desired resource",
@@ -183,15 +203,16 @@ public class SliderApplicationManager implements ApplicationManager {
         "vCore=" + desiredCpu + " memory=" + desiredMemory);
 
     try {
-      LOGGER.info(
+      EVENTLOGGER.info(
           policyId,
           "Sending request to resize application '{}' component '{}' "
-              + "container '{}' to vCore:'{}' memory '{}'",
+              + "container '{}' to: vCore = '{}', memory = '{}'",
           appName, def.getComponentName(), container, desiredCpu,
           desiredMemory);
       sliderClientProxy.resizeContainer(
           user, appName, container, desiredCpu, desiredMemory);
-      LOGGER.info(policyId, "Scaling manager is successfully triggered");
+      EVENTLOGGER
+          .info(policyId, "Scaling request is successfully sent to slider");
       recordProps.put(
           ActionProperties.PROPERTY_STATUS, ActionStatus.SUCCESS);
       recordProps.put(
@@ -215,35 +236,40 @@ public class SliderApplicationManager implements ApplicationManager {
     int allocated = getAllocatedNum(app, cmptName);
     // Cannot get current resource usage from slider
     if (requested < 0 || allocated < 0) {
-      LOGGER.warn(
+      EVENTLOGGER.info(
           policyId,
-          "No scaling activity due to: cannot get component instances from "
-              + "slider application");
+          "No scaling activity due to: cannot get allocated"
+              + " resource from slider,"
+              + " please check slider command \"slider status '{}'\"", appName);
       return recordProps;
     }
 
-    LOGGER.info(
+    EVENTLOGGER.info(
         policyId,
-        "Application '{}' component '{}' current instances: allocated '{}', "
-            + "requested '{}'"
-        , appName, def.getComponentName(), allocated, requested);
+        "Allocated resource to component '{}': allocated = '{}', requested = "
+            + "'{}'",
+        def.getComponentName(), allocated, requested);
     int desired = getDesiredResource(
         def.getAdjustmentType(),
         def.getScalingAdjustment().get(ResourceType.COUNT), allocated);
+    EVENTLOGGER.info(
+        policyId,
+        "Desired resource to component '{}': instances = '{}'",
+        def.getComponentName(), desired);
     // Trigger manager if the desired resource is less than outstanding request
     if (requested != 0 && desired >= (requested + allocated)) {
-      LOGGER.info(
+      EVENTLOGGER.info(
           policyId,
           "No scaling activity due to: outstanding request '{}' has not been "
               + "allocated.",
           requested);
       return recordProps;
     } else if (requested == 0 && desired == (requested + allocated)) {
-      LOGGER.info(
+      EVENTLOGGER.info(
           policyId,
-          "No scaling activity due to: allocated instances equals to desired "
-              + "instances '{}'.",
-          desired);
+          "No scaling activity to component '{}' due to: allocated resource "
+              + "equals to desired resource",
+          def.getComponentName());
       return recordProps;
     }
 
@@ -263,7 +289,7 @@ public class SliderApplicationManager implements ApplicationManager {
     recordProps
         .put(PROPERTY_DESIRED, "instanceCount=" + String.valueOf(desired));
     try {
-      LOGGER.info(
+      EVENTLOGGER.info(
           policyId,
           "Sending request to change application '{}' component '{}' to '{}' "
               + "instance(s)",
@@ -271,7 +297,8 @@ public class SliderApplicationManager implements ApplicationManager {
       Map<String, Integer> componentsMap = new HashMap<String, Integer>();
       componentsMap.put(def.getComponentName(), desired);
       sliderClientProxy.flexApp(user, appName, componentsMap);
-      LOGGER.info(policyId, "Scaling manager is successfully triggered");
+      EVENTLOGGER
+          .info(policyId, "Scaling request is successfully sent to slider");
       recordProps.put(
           ActionProperties.PROPERTY_STATUS, ActionStatus.SUCCESS);
       recordProps.put(

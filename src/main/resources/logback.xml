@@ -2,32 +2,67 @@
 
 <configuration scan="true" scanPeriod="30 seconds">
 
-    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${JAGUAR_HOME}/logs/jaguar.log</file>
         <encoder>
             <pattern>%date{ISO8601} [%thread] %method:%line %highlight(%-5level) %logger{5} - %msg%n</pattern>
         </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <FileNamePattern>${JAGUAR_HOME}/jaguar.log.%i</FileNamePattern>
+            <MinIndex>1</MinIndex>
+            <MaxIndex>10</MaxIndex>
+        </rollingPolicy>
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <MaxFileSize>10MB</MaxFileSize>
+        </triggeringPolicy>
+    </appender>
+
+    <appender name="SIFT" class="ch.qos.logback.classic.sift.SiftingAppender">
+        <discriminator>
+            <key>serviceId</key>
+            <defaultValue>unknown</defaultValue>
+        </discriminator>
+        <sift>
+            <appender name="EVENT-${serviceId}" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <file>${JAGUAR_HOME}/events/application_${serviceId}.event</file>
+                <encoder>
+                    <pattern>%date{ISO8601} %msg%n</pattern>
+                </encoder>
+                <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+                    <FileNamePattern>${JAGUAR_HOME}/events/application_${serviceId}.event.%i</FileNamePattern>
+                    <MinIndex>1</MinIndex>
+                    <MaxIndex>10</MaxIndex>
+                </rollingPolicy>
+                <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+                    <MaxFileSize>10MB</MaxFileSize>
+                </triggeringPolicy>
+            </appender>
+        </sift>
     </appender>
 
     <logger name="com.teraproc" level="INFO" additivity="false">
-        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE"/>
+    </logger>
+    <logger name="EVENT_LOGGER" level="INFO" additivity="false">
+        <appender-ref ref="SIFT"/>
     </logger>
     <logger name="org.hibernate.type" level="INFO">
-        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE"/>
     </logger>
     <logger name="org.hibernate" level="INFO">
-        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE"/>
     </logger>
     <logger name="org.hibernate.SQL" level="INFO">
-        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE"/>
     </logger>
     <logger name="sql-log" level="INFO">
-        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE"/>
     </logger>
     <logger name="org.hibernate.type.descriptor.sql.BasicBinder">
         <level value="INFO"/>
     </logger>
     <root level="INFO">
-        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE"/>
     </root>
 
 </configuration>

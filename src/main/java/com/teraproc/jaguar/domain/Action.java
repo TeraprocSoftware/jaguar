@@ -5,7 +5,7 @@ import com.teraproc.jaguar.provider.manager.ApplicationManager;
 /**
  * Action for framework
  */
-public class Action {
+public class Action implements Cloneable {
   private JaguarUser user;
   private long applicationId;
   private long policyId;
@@ -86,5 +86,13 @@ public class Action {
 
   public synchronized void setLastScalingActionCurrent() {
     this.lastAction = System.currentTimeMillis();
+  }
+
+  public Action clone() {
+    try {
+      return (Action) super.clone();
+    } catch (CloneNotSupportedException e) {
+      return null;
+    }
   }
 }

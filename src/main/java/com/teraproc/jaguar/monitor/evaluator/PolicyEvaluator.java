@@ -23,7 +23,7 @@ import com.teraproc.jaguar.utils.TreeNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
+import org.slf4j.MDC;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import java.lang.reflect.Method;
@@ -40,6 +40,8 @@ public class PolicyEvaluator extends AbstractEventPublisher
 
   private static final Logger LOGGER =
       JaguarLoggerFactory.getLogger(PolicyEvaluator.class);
+  private static final Logger EVENTLOGGER =
+      JaguarLoggerFactory.getLogger("EVENT_LOGGER");
   private static ScriptEngineManager mgr = new ScriptEngineManager();
   private static ScriptEngine engine = mgr.getEngineByName("JavaScript");
 
@@ -63,6 +65,7 @@ public class PolicyEvaluator extends AbstractEventPublisher
 
   @Override
   public void run() {
+    MDC.put("serviceId", String.valueOf(applicationId));
     for (InternalPolicy internal : policyService
         .getInternalPolicies(applicationId)) {
       Policy policy = internal.getPolicy();
@@ -79,20 +82,17 @@ public class PolicyEvaluator extends AbstractEventPublisher
       }
       // policy interval is reached, clear accumulator
       internal.setIntervalAccumulator(0);
-      LOGGER.info(
-          policyId, "Start checking application '{}' policy: '{}'",
-          applicationId, policy.getName());
+      EVENTLOGGER.info(policyId, "***** Starting to evaluate policy *****");
 
       try {
         // check policy's active time window
         if (DateUtils.isActiveTime(
             policy.getId(), policy.getTimeZone(), policy.getCron(),
             policy.getStartTime(), internal.getDurationInSeconds())) {
-          LOGGER.info(
-              policy.getId(), "Policy '{}' is active at current time",
-              policy.getName());
+          EVENTLOGGER.info(policyId, "Now is in active time window");
           evaluatePolicy(internal);
         } else {
+          EVENTLOGGER.info(policyId, "Now is out of active time window.");
           // when active time window is closed, clear history of how many
           // successive intervals the alert is true
           clearSuccessiveIntervals(internal);
@@ -102,6 +102,7 @@ public class PolicyEvaluator extends AbstractEventPublisher
         publishEvent(new UpdateFailedEvent(policy.getId()));
       }
     }
+    MDC.remove("serviceId");
   }
 
   protected void evaluatePolicy(InternalPolicy internal) {
@@ -122,14 +123,17 @@ public class PolicyEvaluator extends AbstractEventPublisher
       return;
     }
 
-    LOGGER.info(
-        policyId, "Instances '{}' evaluate alert as true",
-        instances.toString());
     addSuccessiveIntervals(internal, instances);
-    LOGGER.info(
-        policyId, "Successive intervals is '{}'"
-        , ((InstanceAlert) internal.getAlert()).getLatestSuccessiveIntervals()
+    EVENTLOGGER.info(
+        policyId,
+        "Number of successive intervals that alert is true: '{}'",
+        ((InstanceAlert) internal.getAlert()).getLatestSuccessiveIntervals()
             .toString());
+    EVENTLOGGER.info(
+        policyId,
+        "Whenever a container has at least '{}' successive intervals of " +
+            "true alert, action is triggered.",
+        internal.getAlert().getSuccessiveIntervals());
 
     // trigger instance action if greater than successive interval threshold
     List<String> targets = new ArrayList<>();
@@ -141,14 +145,16 @@ public class PolicyEvaluator extends AbstractEventPublisher
     }
     // instance alert is triggered
     if (targets.size() > 0) {
-      LOGGER.info(
-          policyId,
-          "Instances '{}' have successive intervals equal to or greater than "
-              + "threshold '{}'",
-          targets.toString(), internal.getAlert().getSuccessiveIntervals());
       for (Action action : internal.getActions()) {
         for (String target: targets) {
-          publishInstanceScalingEvent(action, target);
+          if (internal.getRuntimeActions().get(target) != null) {
+            publishInstanceScalingEvent(
+                internal.getRuntimeActions().get(target), target);
+          } else {
+            Action runtimeAction = action.clone();
+            internal.getRuntimeActions().put(target, runtimeAction);
+            publishInstanceScalingEvent(runtimeAction, target);
+          }
         }
       }
     }
@@ -156,26 +162,28 @@ public class PolicyEvaluator extends AbstractEventPublisher
 
   protected void evaluateGroupPolicy(InternalPolicy internal) {
     if (evaluateGroupAlert((GroupAlert) internal.getAlert())) {
-      LOGGER.info(
-          policyId, "Group alert evaluation result: true");
-
+      EVENTLOGGER.info(policyId, "Group alert evaluate final result is 'true'");
       addSuccessiveIntervals(internal, null);
-      LOGGER.info(
-          policyId, "Successive intervals is '{}'",
+      EVENTLOGGER.info(
+          policyId,
+          "Number of successive intervals that alert is true: '{}'",
           ((GroupAlert) internal.getAlert()).getLatestSuccessiveIntervals());
+      EVENTLOGGER.info(
+          policyId,
+          "Whenever at least '{}' successive intervals of " +
+              "true alert, action is triggered.",
+          internal.getAlert().getSuccessiveIntervals());
 
       // trigger action if greater than successive interval threshold
       if (((GroupAlert) internal.getAlert()).getLatestSuccessiveIntervals()
           >= internal.getAlert().getSuccessiveIntervals()) {
-        LOGGER.info(
-            policyId,
-            "Successive intervals is equal to or greater than threshold '{}'"
-            , internal.getAlert().getSuccessiveIntervals());
         for (Action action : internal.getActions()) {
           publishGroupScalingEvent(action);
         }
       }
     } else {
+      EVENTLOGGER
+          .info(policyId, "Group alert evaluate final result is 'false'");
       // clear history successive intervals when alert is false
       clearSuccessiveIntervals(internal);
     }
@@ -183,9 +191,6 @@ public class PolicyEvaluator extends AbstractEventPublisher
 
   private void publishInstanceScalingEvent(
       Action action, String target) {
-    // TODO:
-    // We need to clone the action, otherwise there will be race condition
-    // between this thread, and event processing thread.
     action.setTarget(target);
     action.setUser(getApplication().getUser());
     action.setApplicationId(applicationId);
@@ -294,6 +299,9 @@ public class PolicyEvaluator extends AbstractEventPublisher
 
   private boolean evaluatePercentCondition(Condition condition)
       throws Exception {
+    EVENTLOGGER.info(
+        policyId,
+        "Group alert condition definition: '{}'", condition.toString());
     Map<String, Boolean> instanceEvalResult =
         evaluateInstanceCondition(condition);
     int trueNum = 0;
@@ -302,8 +310,19 @@ public class PolicyEvaluator extends AbstractEventPublisher
         trueNum++;
       }
     }
-    int percentage = 100 * (trueNum / instanceEvalResult.size());
-    return (boolean) engine.eval(percentage + condition.getThreshold());
+
+    float percentage = 100 * ((float) trueNum / instanceEvalResult.size());
+    boolean rspd = (boolean) engine.eval(percentage + condition.getThreshold());
+    EVENTLOGGER.info(
+        policyId,
+        "Percent of containers having evaluate result as true: '100*"
+            + "({}/{})={}'",
+        trueNum, instanceEvalResult.size(), percentage);
+    EVENTLOGGER.info(
+        policyId,
+        "Group alert condition evaluate result: {} {} is {}",
+        percentage, condition.getThreshold(), rspd);
+    return rspd;
   }
 
   private Map<String, Boolean> evaluateInstanceCondition(Condition condition)
@@ -314,8 +333,15 @@ public class PolicyEvaluator extends AbstractEventPublisher
     Map<String, Map<String, List<Number>>> allMetrics =
         elasticsearchClient.getInstanceMetrics(
             getApplication().getName(), condition.getComponentName()
-            , new ArrayList<String>(condition.getMetrics()),
+            , new ArrayList<>(condition.getMetrics()),
             current - policyInterval * 1000, current);
+    EVENTLOGGER.info(
+        policyId,
+        "Container metrics collected during last interval: '{}'",
+        allMetrics.toString());
+    EVENTLOGGER.info(
+        policyId, "Instance alert definition: '{}'",
+        condition.getExpression());
 
     /* TODO: Optimize it by only iterating the condition once */
     for (Map.Entry<String, Map<String, List<Number>>> entry : allMetrics
@@ -358,20 +384,33 @@ public class PolicyEvaluator extends AbstractEventPublisher
               AggregateUtils.last(containerMetrics.get(metricName)).toString());
         }
       }
+      EVENTLOGGER.info(
+          policyId, "Evaluate container '{}': '{}'",
+          container, evalStr);
 
       instanceAlertMap.put(container, (boolean) engine.eval(evalStr));
     }
+    EVENTLOGGER.info(
+        policyId, "Container evaluate result: '{}'",
+        instanceAlertMap.toString());
     return instanceAlertMap;
   }
 
   private boolean evaluateAggregateCondition(Condition condition)
       throws Exception {
+    EVENTLOGGER.info(
+        policyId,
+        "Group alert condition definition: '{}'", condition.toString());
     long current = System.currentTimeMillis();
     Map<String, Map<String, Number>> allMetrics =
         elasticsearchClient.getMetricsLatestValue(
             getApplication().getName(), condition.getComponentName()
             , new ArrayList<String>(condition.getMetrics()),
             current - policyInterval * 1000, current);
+    EVENTLOGGER.info(
+        policyId,
+        "Container latest metrics: '{}'",
+        allMetrics.toString());
 
     // calculate aggregated metrics
     for (Map.Entry<String, Map<String, Number>> entry : condition
@@ -383,6 +422,9 @@ public class PolicyEvaluator extends AbstractEventPublisher
         Method method = AggregateUtils.class.getMethod(func, Collection.class);
         Number aggregatedValue = (Number) method.invoke(null, values);
         entry1.setValue(aggregatedValue);
+        EVENTLOGGER.info(
+            policyId, "Aggregated metric value: '{}({})={}'", func, metricName,
+            aggregatedValue);
       }
     }
 
@@ -398,7 +440,12 @@ public class PolicyEvaluator extends AbstractEventPublisher
         evalStr = evalStr.replaceAll(pattern, metricValue.toString());
       }
     }
-    return (boolean) engine.eval(evalStr);
+
+    boolean rspd = (boolean) engine.eval(evalStr);
+    EVENTLOGGER.info(
+        policyId, "Evaluate group alert condition: '{}' is '{}'",
+        evalStr, rspd);
+    return rspd;
   }
 
   protected Application getApplication() {

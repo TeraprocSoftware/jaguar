@@ -78,4 +78,9 @@ public class Condition {
   public void setThreshold(String threshold) {
     this.threshold = threshold;
   }
+
+  public String toString() {
+    return "componentName=" + componentName + " evalMethod=" + evalMethod
+        + " threshold=" + threshold + " expression=" + expression;
+  }
 }

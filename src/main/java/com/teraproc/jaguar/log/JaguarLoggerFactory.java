@@ -10,4 +10,7 @@ public final class JaguarLoggerFactory {
     return new Logger(clazz);
   }
 
+  public static Logger getLogger(String name)  {
+    return new Logger(name);
+  }
 }

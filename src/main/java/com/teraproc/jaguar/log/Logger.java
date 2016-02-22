@@ -5,11 +5,16 @@ import org.slf4j.LoggerFactory;
 public class Logger implements JaguarLogger {
 
   public static final int NOT_SERVICE_RELATED = -1;
-  private static final String DECORATOR = " * * * ";
+  private static final String L_DECORATOR = " [";
+  private static final String R_DECORATOR = "] ";
   private final org.slf4j.Logger sl4jLogger;
 
   public Logger(Class clazz) {
     this.sl4jLogger = LoggerFactory.getLogger(clazz);
+  }
+
+  public Logger(String name) {
+    this.sl4jLogger = LoggerFactory.getLogger(name);
   }
 
   @Override
@@ -171,7 +176,7 @@ public class Logger implements JaguarLogger {
     if (NOT_SERVICE_RELATED == serviceId) {
       return "";
     }
-    return DECORATOR + serviceId + DECORATOR;
+    return L_DECORATOR + serviceId + R_DECORATOR;
   }
 
 }

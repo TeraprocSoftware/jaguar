@@ -1,16 +1,22 @@
 package com.teraproc.jaguar.domain;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class InternalPolicy {
   private Policy policy;
   private BaseAlert alert;
+  // action definition
   private List<Action> actions;
+  // runtime actions
+  private Map<String, Action> runtimeActions;
   private long durationInSeconds;
   private int intervalAccumulator;
 
   public InternalPolicy(Policy policy) {
     this.policy = policy;
+    runtimeActions = new HashMap<>();
   }
 
   public Policy getPolicy() {
@@ -31,6 +37,15 @@ public class InternalPolicy {
 
   public void setActions(List<Action> actions) {
     this.actions = actions;
+  }
+
+  public Map<String, Action> getRuntimeActions() {
+    return runtimeActions;
+  }
+
+  public void setRuntimeActions(
+      Map<String, Action> runtimeActions) {
+    this.runtimeActions = runtimeActions;
   }
 
   public BaseAlert getAlert() {

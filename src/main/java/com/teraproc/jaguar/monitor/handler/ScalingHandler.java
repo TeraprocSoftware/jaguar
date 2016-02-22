@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
-
+import org.slf4j.MDC;
 import java.text.DecimalFormat;
 import java.util.concurrent.ExecutorService;
 
@@ -17,9 +17,8 @@ import java.util.concurrent.ExecutorService;
 public class ScalingHandler implements ApplicationListener<ScalingEvent> {
   private static final DecimalFormat TIME_FORMAT = new DecimalFormat("##.##");
   private static final int MIN_IN_MS = 1000 * 60;
-
-  private static final Logger LOGGER =
-      JaguarLoggerFactory.getLogger(ScalingHandler.class);
+  private static final Logger EVENTLOGGER =
+      JaguarLoggerFactory.getLogger("EVENT_LOGGER");
 
   @Autowired
   private ExecutorService executorService;
@@ -32,11 +31,13 @@ public class ScalingHandler implements ApplicationListener<ScalingEvent> {
     Action action = event.getAction();
     long remainingTime = getRemainingCooldownTime(action);
     if (remainingTime > 0) {
-      LOGGER.info(action.getPolicyId(),
-          "Action '{}' cannot be triggered. The application is in the middle of"
-              + " cooling down, which will be completed in '{}' min(s)",
-              action.getDefinition(), TIME_FORMAT
-                  .format((double) remainingTime / MIN_IN_MS));
+      MDC.put("serviceId", String.valueOf(action.getApplicationId()));
+      EVENTLOGGER.info(
+          action.getPolicyId(),
+          "Action cannot be triggered. The policy is in the middle of cooling"
+              + " down, which will be completed in '{}' min(s)",
+          TIME_FORMAT.format((double) remainingTime / MIN_IN_MS));
+      MDC.remove("serviceId");
       return;
     }
     executorService.execute(getScalingRequest(action));
