@@ -10,13 +10,10 @@ import org.elasticsearch.common.io.FileSystemUtils;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.node.Node;
-
 import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-
 import org.junit.Test;
-
 import java.io.File;
 import java.util.List;
 import java.util.Map;
@@ -37,52 +34,10 @@ public class ElasticsearchClientProviderTest {
   private static final List<String> containers =
       Arrays.asList("container-1", "container-2", "container-3", "container-4");
 
-  private static Node node;
+  private Node node;
   private ElasticsearchClientProvider underTest;
   private long time_1;
   private long time_2;
-
-  private static void startElasticSearch() throws Exception {
-    final String nodeName = "esnode";
-
-    Map<String, String> settingsMap = new HashMap<>();
-
-    // create all data directories under Maven build directory
-    settingsMap.put("path.data", "target");
-    settingsMap.put("path.work", "target");
-    settingsMap.put("path.logs", "target");
-
-    // set ports used by Elastic Search to something different than default
-    settingsMap.put("http.port", HTTP_PORT);
-    settingsMap.put("transport.tcp.port", HTTP_TRANSPORT_PORT);
-    settingsMap.put("index.number_of_shards", "1");
-    settingsMap.put("index.number_of_replicas", "0");
-
-    // disable clustering
-    settingsMap.put("discovery.zen.ping.multicast.enabled", "false");
-
-    // enable automatic index creation
-    settingsMap.put("action.auto_create_index", "true");
-
-    // enable automatic type creation
-    settingsMap.put("index.mapper.dynamic", "true");
-
-    removeOldDataDir("target/" + nodeName);
-
-    Settings settings = ImmutableSettings.settingsBuilder()
-        .put(settingsMap).build();
-    node = nodeBuilder().settings(settings).clusterName(nodeName)
-        .local(true).node();
-    node.start();
-    Thread.sleep(5000);
-  }
-
-  private static void removeOldDataDir(String datadir) throws Exception {
-    File dataDir = new File(datadir);
-    if (dataDir.exists()) {
-      FileSystemUtils.deleteRecursively(dataDir, true);
-    }
-  }
 
   @Before
   public void setup() throws Exception {
@@ -135,6 +90,48 @@ public class ElasticsearchClientProviderTest {
       }
     }
     Thread.sleep(1000);
+  }
+
+  private void startElasticSearch() throws Exception {
+    final String nodeName = "esnode";
+
+    Map<String, String> settingsMap = new HashMap<>();
+
+    // create all data directories under Maven build directory
+    settingsMap.put("path.data", "target");
+    settingsMap.put("path.work", "target");
+    settingsMap.put("path.logs", "target");
+
+    // set ports used by Elastic Search to something different than default
+    settingsMap.put("http.port", HTTP_PORT);
+    settingsMap.put("transport.tcp.port", HTTP_TRANSPORT_PORT);
+    settingsMap.put("index.number_of_shards", "1");
+    settingsMap.put("index.number_of_replicas", "0");
+
+    // disable clustering
+    settingsMap.put("discovery.zen.ping.multicast.enabled", "false");
+
+    // enable automatic index creation
+    settingsMap.put("action.auto_create_index", "true");
+
+    // enable automatic type creation
+    settingsMap.put("index.mapper.dynamic", "true");
+
+    removeOldDataDir("target/" + nodeName);
+
+    Settings settings = ImmutableSettings.settingsBuilder()
+        .put(settingsMap).build();
+    node = nodeBuilder().settings(settings).clusterName(nodeName)
+        .local(true).node();
+    node.start();
+    Thread.sleep(5000);
+  }
+
+  private void removeOldDataDir(String datadir) throws Exception {
+    File dataDir = new File(datadir);
+    if (dataDir.exists()) {
+      FileSystemUtils.deleteRecursively(dataDir, true);
+    }
   }
 
   @After

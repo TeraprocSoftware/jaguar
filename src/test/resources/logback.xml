@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <configuration scan="true" scanPeriod="30 seconds">
+    <property name="JAGUAR_HOME" value="target" />
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${JAGUAR_HOME}/logs/jaguar.log</file>
         <encoder>

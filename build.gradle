@@ -114,6 +114,10 @@ task createConf {
             from "conf"
             into conf
         }
+        copy {
+            from "src/main/resources/logback.xml"
+            into conf
+        }
     }
 }
 
