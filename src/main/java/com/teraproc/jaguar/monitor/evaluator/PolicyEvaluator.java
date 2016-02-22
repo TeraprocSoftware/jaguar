@@ -1,5 +1,6 @@
 package com.teraproc.jaguar.monitor.evaluator;
 
+import com.google.common.base.Throwables;
 import com.teraproc.jaguar.domain.Action;
 import com.teraproc.jaguar.domain.Application;
 import com.teraproc.jaguar.domain.Condition;
@@ -274,9 +275,8 @@ public class PolicyEvaluator extends AbstractEventPublisher
     try {
       return evaluateNode(alert.getRoot());
     } catch (Exception e) {
-      LOGGER
-          .error(
-              policyId, "Unable to evaluate alert due to: {}", e.getMessage());
+      LOGGER.error(policyId, "Unable to evaluate alert due to: {}",
+          Throwables.getStackTraceAsString(e));
       return false;
     }
   }
