@@ -1,0 +1,4 @@
+[client]
+jaguar_server=localhost:9000
+
+[server]

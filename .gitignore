@@ -14,5 +14,8 @@
 *.jks
 *.ipr
 *.ips
+*.egginfo
+*.pyc
+.*.swp
 atlassian*
 userdatas/
