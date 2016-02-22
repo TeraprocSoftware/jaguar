@@ -20,14 +20,14 @@ public class TreeNode<T> {
     return childNode;
   }
 
-  public void addChildNode(TreeNode childNode) {
+  public void addChildNode(TreeNode<T> childNode) {
     childNode.parent = this;
     this.children.add(childNode);
   }
 
 
   public boolean hasChild() {
-    return children.size() == 0 ? false : true;
+    return children.size() != 0;
   }
 
   public Collection<TreeNode<T>> getChildren() {

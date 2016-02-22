@@ -24,11 +24,11 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.verify;
@@ -55,6 +55,7 @@ public class PolicyEvaluatorTest {
   @Mock
   private Map<Provider, ApplicationManager> applicationManagers =
       new HashMap<>();
+
   @InjectMocks
   private PolicyService policyParser = new PolicyService();
 
@@ -72,13 +73,13 @@ public class PolicyEvaluatorTest {
   public void TestEvaluateGroupAlert() throws Exception {
     when(
         elasticsearchClient.getMetricsLatestValue(
-            anyString(), anyString(), any(
-                List.class), anyLong(), anyLong()))
+            anyString(), anyString(), anyListOf(
+                String.class), anyLong(), anyLong()))
         .thenReturn(TestUtils.getMetricsLatestValue());
     when(
         elasticsearchClient.getInstanceMetrics(
-            anyString(), anyString(), any(
-                List.class), anyLong(), anyLong()))
+            anyString(), anyString(), anyListOf(
+                String.class), anyLong(), anyLong()))
         .thenReturn(TestUtils.getInstanceMetrics());
     when(applicationService.find(anyLong())).thenReturn(
         Mockito.mock(
@@ -127,13 +128,13 @@ public class PolicyEvaluatorTest {
   public void testEvaluateGroupPolicy() throws Exception {
     when(
         elasticsearchClient.getMetricsLatestValue(
-            anyString(), anyString(), any(
-                List.class), anyLong(), anyLong()))
+            anyString(), anyString(), anyListOf(
+                String.class), anyLong(), anyLong()))
         .thenReturn(TestUtils.getMetricsLatestValue());
     when(
         elasticsearchClient.getInstanceMetrics(
-            anyString(), anyString(), any(
-                List.class), anyLong(), anyLong()))
+            anyString(), anyString(), anyListOf(
+                String.class), anyLong(), anyLong()))
         .thenReturn(TestUtils.getInstanceMetrics());
     when(applicationService.find(anyLong())).thenReturn(
         Mockito.mock(
@@ -175,13 +176,13 @@ public class PolicyEvaluatorTest {
   public void testEvaluateInstanceAlert() throws Exception {
     when(
         elasticsearchClient.getMetricsLatestValue(
-            anyString(), anyString(), any(
-                List.class), anyLong(), anyLong()))
+            anyString(), anyString(), anyListOf(
+                String.class), anyLong(), anyLong()))
         .thenReturn(TestUtils.getMetricsLatestValue());
     when(
         elasticsearchClient.getInstanceMetrics(
-            anyString(), anyString(), any(
-                List.class), anyLong(), anyLong()))
+            anyString(), anyString(), anyListOf(
+                String.class), anyLong(), anyLong()))
         .thenReturn(TestUtils.getInstanceMetrics());
     when(applicationService.find(anyLong())).thenReturn(
         Mockito.mock(
@@ -217,13 +218,13 @@ public class PolicyEvaluatorTest {
   public void testEvaluateInstancePolicy() throws Exception {
     when(
         elasticsearchClient.getMetricsLatestValue(
-            anyString(), anyString(), any(
-                List.class), anyLong(), anyLong()))
+            anyString(), anyString(), anyListOf(
+                String.class), anyLong(), anyLong()))
         .thenReturn(TestUtils.getMetricsLatestValue());
     when(
         elasticsearchClient.getInstanceMetrics(
-            anyString(), anyString(), any(
-                List.class), anyLong(), anyLong()))
+            anyString(), anyString(), anyListOf(
+                String.class), anyLong(), anyLong()))
         .thenReturn(TestUtils.getInstanceMetrics());
     when(applicationService.find(anyLong())).thenReturn(
         Mockito.mock(

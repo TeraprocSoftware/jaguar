@@ -13,7 +13,7 @@ public class SliderApp {
   private Map<String, SliderAppComponent> components;
 
   public SliderApp() {
-    components = new HashMap();
+    components = new HashMap<>();
   }
 
   public String getVersion() {

@@ -284,7 +284,7 @@ public class PolicyEvaluator extends AbstractEventPublisher
   private boolean evaluateNode(TreeNode<Condition> node) throws Exception {
     if (node.hasChild()) {
       List<Boolean> items = new ArrayList<>();
-      for (TreeNode child : node.getChildren()) {
+      for (TreeNode<Condition> child : node.getChildren()) {
         items.add(evaluateNode(child));
       }
       /* TODO: Optimize it by deferring the evaluation until needed. */

@@ -45,7 +45,7 @@ public class Condition {
   }
 
   public void setAggregates() {
-    aggregates = new HashMap();
+    aggregates = new HashMap<>();
     aggregates.put("max", new HashMap<String, Number>());
     aggregates.put("min", new HashMap<String, Number>());
     aggregates.put("sum", new HashMap<String, Number>());
