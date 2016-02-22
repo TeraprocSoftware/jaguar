@@ -131,8 +131,8 @@ public class PolicyEvaluator extends AbstractEventPublisher
             .toString());
     EVENTLOGGER.info(
         policyId,
-        "Whenever a container has at least '{}' successive intervals of " +
-            "true alert, action is triggered.",
+        "Whenever a container has at least '{}' successive intervals of "
+        + "true alert, action is triggered.",
         internal.getAlert().getSuccessiveIntervals());
 
     // trigger instance action if greater than successive interval threshold
@@ -170,8 +170,8 @@ public class PolicyEvaluator extends AbstractEventPublisher
           ((GroupAlert) internal.getAlert()).getLatestSuccessiveIntervals());
       EVENTLOGGER.info(
           policyId,
-          "Whenever at least '{}' successive intervals of " +
-              "true alert, action is triggered.",
+          "Whenever at least '{}' successive intervals of "
+          + "true alert, action is triggered.",
           internal.getAlert().getSuccessiveIntervals());
 
       // trigger action if greater than successive interval threshold
