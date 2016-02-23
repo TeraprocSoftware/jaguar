@@ -32,9 +32,8 @@ public class ElasticsearchClientProvider {
       new HttpClient(new MultiThreadedHttpConnectionManager());
 
   public Map<String, Map<String, List<Number>>> getInstanceMetrics(
-      String service
-      , String component, List<String> metrics, long from, long to)
-      throws Exception {
+      String service, String component, List<String> metrics, long from,
+      long to) throws Exception {
     // < containerId, < metricName, < metricValues >>>
     Map<String, Map<String, List<Number>>> result = new HashMap<>();
     String jsonRequest =
@@ -42,29 +41,33 @@ public class ElasticsearchClientProvider {
     String jsonResponse = getMetrics(service, component, jsonRequest);
     ElasticsearchMetricResponse response =
         mapper.readValue(jsonResponse, ElasticsearchMetricResponse.class);
-    if (response.getHits() != null && response.getHits().getHits() != null
-        && response.getHits().getHits().iterator().next().getFields() != null) {
-      for (ElasticsearchHitsHits hit : response.getHits().getHits()) {
-        String containerId =
-            (String) hit.getFields().get(METRIC_CONTAINERID).toArray()[0];
-        for (Map.Entry<String, Collection<String>> entry : hit.getFields()
-            .entrySet()) {
-          String metricName = entry.getKey();
-          if (metricName.equals(METRIC_CONTAINERID)) {
-            continue;
-          }
-
-          final Number metricValue =
-              Float.valueOf((String) entry.getValue().toArray()[0]);
-          metricName = metricName.substring(METRICS_PREFIX.length());
-          if (!result.containsKey(containerId)) {
-            result.put(containerId, new HashMap<String, List<Number>>());
-          }
-          if (!result.get(containerId).containsKey(metricName)) {
-            result.get(containerId).put(metricName, new ArrayList<Number>());
-          }
-          result.get(containerId).get(metricName).add(metricValue);
+    if (response.getHits() == null || response.getHits().getHits() == null) {
+      return result;
+    }
+    for (ElasticsearchHitsHits hit : response.getHits().getHits()) {
+      if (hit.getFields() == null
+          || hit.getFields().get(METRIC_CONTAINERID) == null) {
+        continue;
+      }
+      String containerId =
+          (String) hit.getFields().get(METRIC_CONTAINERID).toArray()[0];
+      for (Map.Entry<String, Collection<String>> entry : hit.getFields()
+          .entrySet()) {
+        String metricName = entry.getKey();
+        if (metricName.equals(METRIC_CONTAINERID)) {
+          continue;
         }
+
+        final Number metricValue =
+            Float.valueOf((String) entry.getValue().toArray()[0]);
+        metricName = metricName.substring(METRICS_PREFIX.length());
+        if (!result.containsKey(containerId)) {
+          result.put(containerId, new HashMap<String, List<Number>>());
+        }
+        if (!result.get(containerId).containsKey(metricName)) {
+          result.get(containerId).put(metricName, new ArrayList<Number>());
+        }
+        result.get(containerId).get(metricName).add(metricValue);
       }
     }
     return result;
@@ -72,8 +75,7 @@ public class ElasticsearchClientProvider {
 
   public Map<String, Map<String, Number>> getMetricsLatestValue(
       String service, String component, List<String> metrics, long from,
-      long to)
-      throws Exception {
+      long to) throws Exception {
     // < metricName, < containerId, metricValue>>
     Map<String, Map<String, Number>> result = new HashMap<>();
     String jsonRequest =
@@ -81,26 +83,29 @@ public class ElasticsearchClientProvider {
     String jsonResponse = getMetrics(service, component, jsonRequest);
     ElasticsearchMetricResponse response =
         mapper.readValue(jsonResponse, ElasticsearchMetricResponse.class);
-    if (response.getHits() != null && response.getHits().getHits() != null
-        && response.getHits().getHits().iterator().next().getFields() != null) {
-      for (ElasticsearchHitsHits hit : response.getHits().getHits()) {
-        String containerId =
-            (String) hit.getFields().get(METRIC_CONTAINERID).toArray()[0];
-        for (Map.Entry<String, Collection<String>> entry : hit.getFields()
-            .entrySet()) {
-          String metricName = entry.getKey();
-          if (metricName.equals(METRIC_CONTAINERID)) {
-            continue;
-          }
-
-          final Number metricValue =
-              Float.valueOf((String) entry.getValue().toArray()[0]);
-          metricName = metricName.substring(METRICS_PREFIX.length());
-          if (!result.containsKey(metricName)) {
-            result.put(metricName, new HashMap<String, Number>());
-          }
-          result.get(metricName).put(containerId, metricValue);
+    if (response.getHits() == null || response.getHits().getHits() == null) {
+      return result;
+    }
+    for (ElasticsearchHitsHits hit : response.getHits().getHits()) {
+      if (hit.getFields() == null
+          || hit.getFields().get(METRIC_CONTAINERID) == null) {
+        continue;
+      }
+      String containerId =
+          (String) hit.getFields().get(METRIC_CONTAINERID).toArray()[0];
+      for (Map.Entry<String, Collection<String>> entry : hit.getFields()
+          .entrySet()) {
+        String metricName = entry.getKey();
+        if (metricName.equals(METRIC_CONTAINERID)) {
+          continue;
         }
+        final Number metricValue =
+            Float.valueOf((String) entry.getValue().toArray()[0]);
+        metricName = metricName.substring(METRICS_PREFIX.length());
+        if (!result.containsKey(metricName)) {
+          result.put(metricName, new HashMap<String, Number>());
+        }
+        result.get(metricName).put(containerId, metricValue);
       }
     }
     return result;

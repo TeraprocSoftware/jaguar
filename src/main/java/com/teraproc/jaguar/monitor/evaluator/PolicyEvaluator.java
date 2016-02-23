@@ -355,6 +355,13 @@ public class PolicyEvaluator extends AbstractEventPublisher
         for (Map.Entry<String, Number> entry2 : entry1.getValue().entrySet()) {
           String metricName = entry2.getKey();
           Collection<Number> values = containerMetrics.get(metricName);
+          if (values == null) {
+            EVENTLOGGER.info(
+                policyId, "Failed to retrieve metric: '{}'. The metric does not"
+                    + " exist in the metric server.", metricName);
+            instanceAlertMap.put(container, false);
+            continue;
+          }
           Method method =
               AggregateUtils.class.getMethod(func, Collection.class);
           Number aggregatedValue = (Number) method.invoke(null, values);
@@ -418,6 +425,12 @@ public class PolicyEvaluator extends AbstractEventPublisher
       String func = entry.getKey();
       for (Map.Entry<String, Number> entry1 : entry.getValue().entrySet()) {
         String metricName = entry1.getKey();
+        if (allMetrics.get(metricName) == null) {
+          EVENTLOGGER.info(
+              policyId, "Failed to retrieve metric: '{}'. The metric does not "
+                  + "exist in the metric server.", metricName);
+          return false;
+        }
         Collection<Number> values = allMetrics.get(metricName).values();
         Method method = AggregateUtils.class.getMethod(func, Collection.class);
         Number aggregatedValue = (Number) method.invoke(null, values);
