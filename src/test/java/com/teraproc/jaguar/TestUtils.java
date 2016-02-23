@@ -7,6 +7,7 @@ import com.teraproc.jaguar.domain.Provider;
 import com.teraproc.jaguar.domain.History;
 import com.teraproc.jaguar.domain.Scope;
 import com.teraproc.jaguar.domain.ActionProperties;
+import com.teraproc.jaguar.provider.manager.slider.ResourceType;
 import com.teraproc.jaguar.provider.manager.slider.SliderApp;
 import com.teraproc.jaguar.provider.manager.slider.SliderAppComponent;
 import com.teraproc.jaguar.rest.json.ApplicationJson;
@@ -23,6 +24,7 @@ public class TestUtils {
   public static final String DUMMY_USER = "dummyUser";
   public static final String DUMMY_APP = "hbase";
   public static final String DUMMY_APP_CMPT = "HBASE_REGIONSERVER";
+  public static final String DUMMY_CONTAINER = "100";
   public static final String DUMMY_POLICY_SCALE_OUT_NAME =
       "dummyScaleOutPolicy";
 
@@ -114,8 +116,9 @@ public class TestUtils {
     policy.setActionDefinition(
         "[{\"componentName\":\"HBASE_REGIONSERVER\","
             + "\"adjustmentType\":\"DELTA_COUNT\","
-            + "\"scalingAdjustment\":{\"COUNT\":{\"min\":1,\"max\":3,"
-            + "\"adjustment\":1}}}]");
+            + "\"scalingAdjustment\":{\"CPU\":{\"min\":1,\"max\":4,"
+            + "\"adjustment\":1}, \"MEMORY\":{\"min\":1024,\"max\":4096,"
+            + "\"adjustment\":1024}}}]");
     return policy;
   }
 
@@ -142,11 +145,19 @@ public class TestUtils {
     return json;
   }
 
-  public static String getActionDefinition() {
+  public static String getScaleAppActionDefinition() {
     return "{\"componentName\":\"HBASE_REGIONSERVER\", \"cooldown\": 60,"
         + "\"adjustmentType\":\"DELTA_COUNT\","
         + "\"scalingAdjustment\":{\"COUNT\":{\"min\":1,\"max\":3,"
         + "\"adjustment\":1}}}";
+  }
+
+  public static String getScaleInstanceActionDefinition() {
+    return "{\"componentName\":\"HBASE_REGIONSERVER\","
+        + "\"adjustmentType\":\"DELTA_COUNT\","
+        + "\"scalingAdjustment\":{\"CPU\":{\"min\":1,\"max\":4,"
+        + "\"adjustment\":1}, \"MEMORY\":{\"min\":1024,\"max\":4096,"
+        + "\"adjustment\":1024}}}";
   }
 
   public static History getHistory() {
@@ -178,17 +189,31 @@ public class TestUtils {
     cmpt.setMemory(1024);
     cmpt.setActualInstances(1);
     cmpt.setRequestedInstances(0);
+    Map<ResourceType, Integer> res = new HashMap<>();
+    res.put(ResourceType.CPU, 1);
+    res.put(ResourceType.MEMORY, 1024);
+    cmpt.getContainers().put(DUMMY_CONTAINER, res);
     app.setComponents(new HashMap<String, SliderAppComponent>());
     app.getComponents().put(DUMMY_APP_CMPT, cmpt);
     return app;
   }
 
-  public static Properties getgActionContext() {
+  public static Properties getGroupActionContext() {
     Properties props = new Properties();
     props.put(ActionProperties.PROPERTY_POLICY_ID, "1");
     props.put(ActionProperties.PROPERTY_APPLICATION_NAME, DUMMY_APP);
     props.put(ActionProperties.PROPERTY_COMPONENT_NAME, DUMMY_APP_CMPT);
     props.put(ActionProperties.PROPERTY_SCOPE, Scope.GROUP.toString());
+    return props;
+  }
+
+  public static Properties getInstanceActionContext() {
+    Properties props = new Properties();
+    props.put(ActionProperties.PROPERTY_POLICY_ID, "1");
+    props.put(ActionProperties.PROPERTY_APPLICATION_NAME, DUMMY_APP);
+    props.put(ActionProperties.PROPERTY_COMPONENT_NAME, DUMMY_APP_CMPT);
+    props.put(ActionProperties.PROPERTY_SCOPE, Scope.INSTANCE.toString());
+    props.put(ActionProperties.PROPERTY_CONTAINER_ID, DUMMY_CONTAINER);
     return props;
   }
 

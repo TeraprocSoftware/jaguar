@@ -58,6 +58,62 @@ public class PolicyServiceTest {
     verify(policyRepository, times(1)).save(any(Policy.class));
   }
 
+  @Test
+  public void testCreateInstancePolicy() {
+    when(applicationService.findOneByUser(any(JaguarUser.class), anyLong()))
+        .thenReturn(TestUtils.getApplication());
+    when(applicationManagers.get(any(Provider.class))).thenReturn(
+        Mockito.mock(SliderApplicationManager.class));
+    when(policyRepository.save(any(Policy.class))).thenReturn(
+        Mockito.mock(Policy.class));
+
+    JaguarUser user = TestUtils.getJaguarUser();
+    Policy policy = TestUtils.getInstancePolicy();
+    underTest.createPolicy(user, 1L, policy, Scope.INSTANCE);
+  }
+
+  @Test
+  public void testCreateInstancePolicyCpu() {
+    when(applicationService.findOneByUser(any(JaguarUser.class), anyLong()))
+        .thenReturn(TestUtils.getApplication());
+    when(applicationManagers.get(any(Provider.class))).thenReturn(
+        Mockito.mock(SliderApplicationManager.class));
+    when(policyRepository.save(any(Policy.class))).thenReturn(
+        Mockito.mock(Policy.class));
+
+    JaguarUser user = TestUtils.getJaguarUser();
+    Policy policy = TestUtils.getInstancePolicy();
+    underTest.createPolicy(user, 1L, policy, Scope.INSTANCE);
+    verify(policyRepository, times(1)).save(any(Policy.class));
+    policy.setActionDefinition(
+        "[{\"componentName\":\"HBASE_REGIONSERVER\","
+            + "\"adjustmentType\":\"DELTA_COUNT\","
+            + "\"scalingAdjustment\":{\"CPU\":{\"min\":1,\"max\":4,"
+            + "\"adjustment\":1}}}]");
+    underTest.createPolicy(user, 1L, policy, Scope.INSTANCE);
+  }
+
+  @Test
+  public void testCreateInstancePolicyMemory() {
+    when(applicationService.findOneByUser(any(JaguarUser.class), anyLong()))
+        .thenReturn(TestUtils.getApplication());
+    when(applicationManagers.get(any(Provider.class))).thenReturn(
+        Mockito.mock(SliderApplicationManager.class));
+    when(policyRepository.save(any(Policy.class))).thenReturn(
+        Mockito.mock(Policy.class));
+
+    JaguarUser user = TestUtils.getJaguarUser();
+    Policy policy = TestUtils.getInstancePolicy();
+    underTest.createPolicy(user, 1L, policy, Scope.INSTANCE);
+    verify(policyRepository, times(1)).save(any(Policy.class));
+    policy.setActionDefinition(
+        "[{\"componentName\":\"HBASE_REGIONSERVER\","
+            + "\"adjustmentType\":\"DELTA_COUNT\","
+            + "\"scalingAdjustment\":{\"MEMORY\":{\"min\":1024,\"max\":4096,"
+            + "\"adjustment\":1024}}}]");
+    underTest.createPolicy(user, 1L, policy, Scope.INSTANCE);
+  }
+
   @Test(expected = InvalidFormatException.class)
   public void TestCreatePolicyNoField() {
     when(applicationService.findOneByUser(any(JaguarUser.class), anyLong()))

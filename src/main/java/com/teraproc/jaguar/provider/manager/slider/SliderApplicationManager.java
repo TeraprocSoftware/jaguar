@@ -164,19 +164,26 @@ public class SliderApplicationManager implements ApplicationManager {
         "Allocated resource to container '{}': vCore = '{}', memory = '{}'",
         container, allocatedCpu, allocatedMemory);
 
-    int desiredCpu = getDesiredResource(
-        def.getAdjustmentType(),
-        def.getScalingAdjustment().get(ResourceType.CPU), allocatedCpu);
-    int desiredMemory = getDesiredResource(
-        def.getAdjustmentType(),
-        def.getScalingAdjustment().get(ResourceType.MEMORY), allocatedMemory);
+    // set "desiredCpu = allocatedCpu" if cpu is not scaled
+    int desiredCpu = def.getScalingAdjustment().containsKey(ResourceType.CPU)
+        ? getDesiredResource(
+            def.getAdjustmentType(),
+            def.getScalingAdjustment().get(ResourceType.CPU), allocatedCpu)
+        : allocatedCpu;
+    // set "desiredMemory = allocatedMemory" if memory is not scaled
+    int desiredMemory =
+        def.getScalingAdjustment().containsKey(ResourceType.MEMORY)
+            ? getDesiredResource(
+                def.getAdjustmentType(),
+                def.getScalingAdjustment().get(ResourceType.MEMORY),
+                allocatedMemory) : allocatedMemory;
     EVENTLOGGER.info(
         policyId,
         "Desired resource to container '{}': vCore = '{}', memory = '{}'",
         container, desiredCpu, desiredMemory);
 
-    // resize container only if desired is more than allocated
-    if (desiredMemory == allocatedMemory) {
+    // resize container only if desired does not equal to allocated
+    if (desiredCpu == allocatedCpu && desiredMemory == allocatedMemory) {
       EVENTLOGGER.info(
           policyId,
           "No scaling activity to container '{}' due to: allocated resource "
@@ -187,14 +194,17 @@ public class SliderApplicationManager implements ApplicationManager {
 
     // Record manager properties
     recordProps.put(PROPERTY_COMPONENT_NAME, cmptName);
+    recordProps.put(PROPERTY_CONTAINER_ID, container);
     recordProps
         .put(PROPERTY_ADJUSTMENT_TYPE, def.getAdjustmentType().toString());
-    recordProps.put(
-        PROPERTY_ADJUSTMENT,
-        def.getScalingAdjustment().get(ResourceType.CPU).toString() + " "
-            + def
-            .getScalingAdjustment().get(ResourceType.MEMORY).toString());
-    recordProps.put(PROPERTY_CONTAINER_ID, container);
+    String adjust = "";
+    for (Map.Entry<ResourceType, Capacity> entry : def.getScalingAdjustment()
+        .entrySet()) {
+      ResourceType res = entry.getKey();
+      Capacity cap = entry.getValue();
+      adjust = res.toString() + "[" + cap.toString() + "] ";
+    }
+    recordProps.put(PROPERTY_ADJUSTMENT, adjust);
     recordProps.put(
         PROPERTY_ORIGINAL_ALLOCATED,
         "vCore=" + allocatedCpu + " memory=" + allocatedMemory);

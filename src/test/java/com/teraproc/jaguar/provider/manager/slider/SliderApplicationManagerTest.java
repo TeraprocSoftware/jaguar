@@ -66,7 +66,7 @@ public class SliderApplicationManagerTest {
         .thenReturn(true);
     underTest.validateAction(
         TestUtils.getJaguarUser(), TestUtils.DUMMY_APP,
-        TestUtils.getActionDefinition());
+        TestUtils.getScaleAppActionDefinition());
   }
 
   @Test(expected = Exception.class)
@@ -77,7 +77,7 @@ public class SliderApplicationManagerTest {
         .thenReturn(false);
     underTest.validateAction(
         TestUtils.getJaguarUser(), TestUtils.DUMMY_APP,
-        TestUtils.getActionDefinition());
+        TestUtils.getScaleAppActionDefinition());
   }
 
   @Test(expected = Exception.class)
@@ -97,10 +97,10 @@ public class SliderApplicationManagerTest {
   }
 
   @Test
-  public void testPerformAction() throws Exception {
+  public void testPerformActionScaleApp() throws Exception {
     SliderApp app = TestUtils.getSliderApp();
-    Properties context = TestUtils.getgActionContext();
-    String json = TestUtils.getActionDefinition();
+    Properties context = TestUtils.getGroupActionContext();
+    String json = TestUtils.getScaleAppActionDefinition();
     when(sliderClientProxy.getSliderApp(any(JaguarUser.class), anyString()))
         .thenReturn(app);
 
@@ -244,6 +244,201 @@ public class SliderApplicationManagerTest {
   }
 
   @Test
+  public void testPerformActionScaleInstance() throws Exception {
+    SliderApp app = TestUtils.getSliderApp();
+    Properties context = TestUtils.getInstanceActionContext();
+    String json = TestUtils.getScaleInstanceActionDefinition();
+    when(sliderClientProxy.getSliderApp(any(JaguarUser.class), anyString()))
+        .thenReturn(app);
+
+    // scale-up 1 cpu and 1024 memory
+    Properties result =
+        underTest.performAction(TestUtils.getJaguarUser(), context, json);
+    assertEquals(
+        ActionStatus.SUCCESS,
+        result.get(ActionProperties.PROPERTY_STATUS));
+    assertEquals("vCore=2 memory=2048", result.get("desired"));
+
+    // scale-up 2 cpu and 2048 memory
+    json = "{\"componentName\":\"HBASE_REGIONSERVER\","
+        + "\"adjustmentType\":\"DELTA_COUNT\","
+        + "\"scalingAdjustment\":{\"CPU\":{\"min\":1,\"max\":4,"
+        + "\"adjustment\":2}, \"MEMORY\":{\"min\":1024,\"max\":4096,"
+        + "\"adjustment\":2048}}}";
+    result =
+        underTest.performAction(TestUtils.getJaguarUser(), context, json);
+    assertEquals(
+        ActionStatus.SUCCESS,
+        result.get(ActionProperties.PROPERTY_STATUS));
+    assertEquals("vCore=3 memory=3072", result.get("desired"));
+
+    // scale-up to exact 4 cpu and 10240 memory
+    json = "{\"componentName\":\"HBASE_REGIONSERVER\", \"cooldown\": 60,"
+        + "\"adjustmentType\":\"EXACT\","
+        + "\"scalingAdjustment\":{\"CPU\":{\"min\":1,\"max\":10,"
+        + "\"adjustment\":4}, \"MEMORY\":{\"min\":1,\"max\":10240,"
+        + "\"adjustment\":10240}}}";
+    result =
+        underTest.performAction(TestUtils.getJaguarUser(), context, json);
+    assertEquals(
+        ActionStatus.SUCCESS, result.get(ActionProperties.PROPERTY_STATUS));
+    assertEquals("vCore=4 memory=10240", result.get("desired"));
+
+    // scale-up 50% of existing resources
+    app.getComponents().get(TestUtils.DUMMY_APP_CMPT).getContainers()
+        .get(TestUtils.DUMMY_CONTAINER).put(ResourceType.CPU, 4);
+    app.getComponents().get(TestUtils.DUMMY_APP_CMPT).getContainers().get(
+        TestUtils.DUMMY_CONTAINER).put(ResourceType.MEMORY, 4096);
+    json = "{\"componentName\":\"HBASE_REGIONSERVER\", \"cooldown\": 60,"
+        + "\"adjustmentType\":\"DELTA_PERCENTAGE\","
+        + "\"scalingAdjustment\":{\"CPU\":{\"min\":1,\"max\":10,"
+        + "\"adjustment\":50}, \"MEMORY\":{\"min\":1,\"max\":10240,"
+        + "\"adjustment\":50}}}";
+    result =
+        underTest.performAction(TestUtils.getJaguarUser(), context, json);
+    assertEquals(
+        ActionStatus.SUCCESS,
+        result.get(ActionProperties.PROPERTY_STATUS));
+    assertEquals("vCore=6 memory=6144", result.get("desired"));
+
+    // scale-up cpu only
+    app.getComponents().get(TestUtils.DUMMY_APP_CMPT).getContainers()
+        .get(TestUtils.DUMMY_CONTAINER).put(ResourceType.CPU, 1);
+    app.getComponents().get(TestUtils.DUMMY_APP_CMPT).getContainers().get(
+        TestUtils.DUMMY_CONTAINER).put(ResourceType.MEMORY, 1024);
+    json = "{\"componentName\":\"HBASE_REGIONSERVER\","
+        + "\"adjustmentType\":\"DELTA_COUNT\","
+        + "\"scalingAdjustment\":{\"CPU\":{\"min\":1,\"max\":4,"
+        + "\"adjustment\":2}}}";
+    result =
+        underTest.performAction(TestUtils.getJaguarUser(), context, json);
+    assertEquals(
+        ActionStatus.SUCCESS,
+        result.get(ActionProperties.PROPERTY_STATUS));
+    assertEquals("vCore=3 memory=1024", result.get("desired"));
+
+    // scale-up memory only
+    json = "{\"componentName\":\"HBASE_REGIONSERVER\","
+        + "\"adjustmentType\":\"DELTA_COUNT\","
+        + "\"scalingAdjustment\":{\"MEMORY\":{\"min\":1024,\"max\":4096,"
+        + "\"adjustment\":2048}}}";
+    result =
+        underTest.performAction(TestUtils.getJaguarUser(), context, json);
+    assertEquals(
+        ActionStatus.SUCCESS,
+        result.get(ActionProperties.PROPERTY_STATUS));
+    assertEquals("vCore=1 memory=3072", result.get("desired"));
+
+    // scale-down 1 cpu 2048 memory
+    app.getComponents().get(TestUtils.DUMMY_APP_CMPT).getContainers()
+        .get(TestUtils.DUMMY_CONTAINER).put(ResourceType.CPU, 4);
+    app.getComponents().get(TestUtils.DUMMY_APP_CMPT).getContainers().get(
+        TestUtils.DUMMY_CONTAINER).put(ResourceType.MEMORY, 4096);
+    json = "{\"componentName\":\"HBASE_REGIONSERVER\","
+        + "\"adjustmentType\":\"DELTA_COUNT\","
+        + "\"scalingAdjustment\":{\"CPU\":{\"min\":1,\"max\":4,"
+        + "\"adjustment\":-1}, \"MEMORY\":{\"min\":1024,\"max\":4096,"
+        + "\"adjustment\":-2048}}}";
+    result =
+        underTest.performAction(TestUtils.getJaguarUser(), context, json);
+    assertEquals(
+        ActionStatus.SUCCESS,
+        result.get(ActionProperties.PROPERTY_STATUS));
+    assertEquals("vCore=3 memory=2048", result.get("desired"));
+
+    // scale-down to exact 1 cpu and 2048 memory
+    json = "{\"componentName\":\"HBASE_REGIONSERVER\", \"cooldown\": 60,"
+        + "\"adjustmentType\":\"EXACT\","
+        + "\"scalingAdjustment\":{\"CPU\":{\"min\":1,\"max\":10,"
+        + "\"adjustment\":1}, \"MEMORY\":{\"min\":1,\"max\":10240,"
+        + "\"adjustment\":2048}}}";
+    result =
+        underTest.performAction(TestUtils.getJaguarUser(), context, json);
+    assertEquals(
+        ActionStatus.SUCCESS, result.get(ActionProperties.PROPERTY_STATUS));
+    assertEquals("vCore=1 memory=2048", result.get("desired"));
+
+    // scale-down 50% of existing resources
+    json = "{\"componentName\":\"HBASE_REGIONSERVER\", \"cooldown\": 60,"
+        + "\"adjustmentType\":\"DELTA_PERCENTAGE\","
+        + "\"scalingAdjustment\":{\"CPU\":{\"min\":1,\"max\":10,"
+        + "\"adjustment\":-50}, \"MEMORY\":{\"min\":1,\"max\":10240,"
+        + "\"adjustment\":-50}}}";
+    result =
+        underTest.performAction(TestUtils.getJaguarUser(), context, json);
+    assertEquals(
+        ActionStatus.SUCCESS,
+        result.get(ActionProperties.PROPERTY_STATUS));
+    assertEquals("vCore=2 memory=2048", result.get("desired"));
+
+    // scale-down cpu only
+    app.getComponents().get(TestUtils.DUMMY_APP_CMPT).getContainers()
+        .get(TestUtils.DUMMY_CONTAINER).put(ResourceType.CPU, 4);
+    app.getComponents().get(TestUtils.DUMMY_APP_CMPT).getContainers().get(
+        TestUtils.DUMMY_CONTAINER).put(ResourceType.MEMORY, 4096);
+    json = "{\"componentName\":\"HBASE_REGIONSERVER\","
+        + "\"adjustmentType\":\"DELTA_COUNT\","
+        + "\"scalingAdjustment\":{\"CPU\":{\"min\":1,\"max\":4,"
+        + "\"adjustment\":-3}}}";
+    result =
+        underTest.performAction(TestUtils.getJaguarUser(), context, json);
+    assertEquals(
+        ActionStatus.SUCCESS,
+        result.get(ActionProperties.PROPERTY_STATUS));
+    assertEquals("vCore=1 memory=4096", result.get("desired"));
+
+    // scale-down memory only
+    json = "{\"componentName\":\"HBASE_REGIONSERVER\","
+        + "\"adjustmentType\":\"DELTA_COUNT\","
+        + "\"scalingAdjustment\":{\"MEMORY\":{\"min\":1024,\"max\":4096,"
+        + "\"adjustment\":-2048}}}";
+    result =
+        underTest.performAction(TestUtils.getJaguarUser(), context, json);
+    assertEquals(
+        ActionStatus.SUCCESS,
+        result.get(ActionProperties.PROPERTY_STATUS));
+    assertEquals("vCore=4 memory=2048", result.get("desired"));
+
+    // scale-up round-up to max
+    json = "{\"componentName\":\"HBASE_REGIONSERVER\","
+        + "\"adjustmentType\":\"DELTA_COUNT\","
+        + "\"scalingAdjustment\":{\"CPU\":{\"min\":1,\"max\":5,"
+        + "\"adjustment\":2}, \"MEMORY\":{\"min\":1024,\"max\":5120,"
+        + "\"adjustment\":2048}}}";
+    result =
+        underTest.performAction(TestUtils.getJaguarUser(), context, json);
+    assertEquals(
+        ActionStatus.SUCCESS,
+        result.get(ActionProperties.PROPERTY_STATUS));
+    assertEquals("vCore=5 memory=5120", result.get("desired"));
+
+    // scale-down round-up to min
+    json = "{\"componentName\":\"HBASE_REGIONSERVER\","
+        + "\"adjustmentType\":\"DELTA_COUNT\","
+        + "\"scalingAdjustment\":{\"CPU\":{\"min\":1,\"max\":5,"
+        + "\"adjustment\":-10}, \"MEMORY\":{\"min\":1024,\"max\":5120,"
+        + "\"adjustment\":-10240}}}";
+    result =
+        underTest.performAction(TestUtils.getJaguarUser(), context, json);
+    assertEquals(
+        ActionStatus.SUCCESS,
+        result.get(ActionProperties.PROPERTY_STATUS));
+    assertEquals("vCore=1 memory=1024", result.get("desired"));
+
+    // no action if required equals to allocated
+    json = "{\"componentName\":\"HBASE_REGIONSERVER\", \"cooldown\": 60,"
+        + "\"adjustmentType\":\"EXACT\","
+        + "\"scalingAdjustment\":{\"CPU\":{\"min\":1,\"max\":10,"
+        + "\"adjustment\":4}, \"MEMORY\":{\"min\":1,\"max\":10240,"
+        + "\"adjustment\":4096}}}";
+    result =
+        underTest.performAction(TestUtils.getJaguarUser(), context, json);
+    assertEquals(
+        ActionStatus.NONE,
+        result.get(ActionProperties.PROPERTY_STATUS));
+  }
+
+  @Test
   public void testPerformActionSliderUnavailable() throws Exception {
     SliderApp app = TestUtils.getSliderApp();
     SliderAppComponent cmpt = app.getComponents().get(TestUtils.DUMMY_APP_CMPT);
@@ -254,8 +449,8 @@ public class SliderApplicationManagerTest {
         .thenReturn(app);
 
     Properties result = underTest.performAction(
-        TestUtils.getJaguarUser(), TestUtils.getgActionContext(),
-        TestUtils.getActionDefinition());
+        TestUtils.getJaguarUser(), TestUtils.getGroupActionContext(),
+        TestUtils.getScaleAppActionDefinition());
     assertEquals(
         ActionStatus.NONE,
         result.get(ActionProperties.PROPERTY_STATUS));
