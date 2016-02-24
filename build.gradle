@@ -87,8 +87,9 @@ startScripts {
         unixScript.delete()
         windowsScript.delete()
         copy {
-            from "src/main/cli"
+            from "src/main/python"
             into "$buildDir/scripts"
+            exclude "*.egg-info", "**/*.pyc"
         }
     }
 }
