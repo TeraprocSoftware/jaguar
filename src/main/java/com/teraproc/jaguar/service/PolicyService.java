@@ -133,19 +133,24 @@ public class PolicyService {
   public List<Policy> getPolicies(
       JaguarUser user, long applicationId, Scope scope) {
     applicationService.findOneByUser(user, applicationId);
-    List<Policy> policies =
-        policyRepository.findAllByApplication(applicationId);
-    for (Policy policy : policies) {
-      if (!policy.getScope().equals(scope)) {
-        policies.remove(policy);
-      }
+    // retrieve all policies if scope is null
+    if (scope == null) {
+      return policyRepository.findAllByApplication(applicationId);
+    } else {
+      return policyRepository.findAllByScope(applicationId, scope);
     }
-    return policies;
   }
 
   public Policy getPolicy(JaguarUser user, long applicationId, long policyId) {
     applicationService.findOneByUser(user, applicationId);
     return policyRepository.findByApplication(applicationId, policyId);
+  }
+
+  public Policy getPolicyByScope(
+      JaguarUser user, long applicationId, long policyId, Scope scope) {
+    applicationService.findOneByUser(user, applicationId);
+    return policyRepository.findByScope(
+        applicationId, policyId, scope);
   }
 
   private Policy getExistingPolicy(long applicationId, long policyId) {

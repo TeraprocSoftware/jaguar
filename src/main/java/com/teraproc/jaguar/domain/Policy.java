@@ -18,7 +18,13 @@ import javax.persistence.SequenceGenerator;
         query = "SELECT c FROM Policy c WHERE c.application.id= "
             + ":applicationId AND c.id= :policyId"),
     @NamedQuery(name = "Policy.findAllByApplication",
-        query = "SELECT c FROM Policy c WHERE c.application.id= :id") })
+        query = "SELECT c FROM Policy c WHERE c.application.id= :id"),
+    @NamedQuery(name = "Policy.findAllByScope",
+        query = "SELECT c FROM Policy c WHERE c.application.id= :id "
+            + "AND c.scope= :scope"),
+    @NamedQuery(name = "Policy.findByScope",
+        query = "SELECT c FROM Policy c WHERE c.application.id= "
+            + ":applicationId AND c.id= :policyId AND c.scope= :scope") })
 
 public class Policy {
   private static final int DEFAULT_INTERVAL_IN_SECONDS = 30;

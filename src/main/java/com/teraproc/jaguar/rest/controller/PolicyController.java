@@ -55,7 +55,8 @@ public class PolicyController {
       @ModelAttribute("user") JaguarUser user, @PathVariable long applicationId,
       @PathVariable long policyId) {
     return createPolicyResponse(
-        policyService.getPolicy(user, applicationId, policyId), HttpStatus.OK);
+        policyService.getPolicyByScope(
+            user, applicationId, policyId, Scope.INSTANCE), HttpStatus.OK);
   }
 
   @RequestMapping(value = "/instance/{policyId}", method = RequestMethod.PUT)
@@ -101,7 +102,9 @@ public class PolicyController {
       @ModelAttribute("user") JaguarUser user, @PathVariable long applicationId,
       @PathVariable long policyId) {
     return createPolicyResponse(
-        policyService.getPolicy(user, applicationId, policyId), HttpStatus.OK);
+        policyService
+            .getPolicyByScope(user, applicationId, policyId, Scope.GROUP),
+        HttpStatus.OK);
   }
 
   @RequestMapping(value = "/group/{policyId}", method = RequestMethod.PUT)
@@ -121,6 +124,23 @@ public class PolicyController {
       @PathVariable long policyId) {
     policyService.deletePolicy(user, applicationId, policyId);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
+
+  @RequestMapping(method = RequestMethod.GET)
+  public ResponseEntity<List<PolicyJson>> getPolicies(
+      @ModelAttribute("user") JaguarUser user,
+      @PathVariable long applicationId) {
+    return createPoliciesResponse(
+        policyService.getPolicies(user, applicationId, null));
+  }
+
+  @RequestMapping(value = "/{policyId}", method = RequestMethod.GET)
+  public ResponseEntity<PolicyJson> getPolicy(
+      @ModelAttribute("user") JaguarUser user, @PathVariable long applicationId,
+      @PathVariable long policyId) {
+    return createPolicyResponse(
+        policyService.getPolicy(
+            user, applicationId, policyId), HttpStatus.OK);
   }
 
   private void validatePolicyJson(PolicyJson json) {
