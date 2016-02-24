@@ -8,6 +8,7 @@ This README describes the Jaguar CLI.
 * To install the CLI, simply run the following as ```root```. This will install a ```jaguar``` shell script under ```/usr/local/bin/```.
 ```
 $ cd JAGUAR_TOP/conf
+$ pip install --upgrade setuptools
 $ pip install -e .
 ```
 
