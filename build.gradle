@@ -7,6 +7,7 @@ buildscript {
     dependencies {
         classpath("org.springframework.boot:spring-boot-gradle-plugin:1.0.2.RELEASE")
         classpath "com.smokejumperit.gradle.license:Gradle-License-Report:0.0.2"
+        classpath "com.netflix.nebula:gradle-ospackage-plugin:3.4.0"
     }
 }
 
@@ -21,6 +22,7 @@ apply plugin: 'checkstyle'
 apply plugin: 'jacoco'
 apply plugin: 'sonar-runner'
 apply plugin: 'license-report'
+apply plugin: 'nebula.ospackage'
 
 group = 'com.teraproc'
 mainClassName = "com.teraproc.jaguar.JaguarApplication"
@@ -136,6 +138,46 @@ distributions {
             }
         }
     }
+}
+
+ospackage {
+    release = '1'
+    os = LINUX
+    arch = NOARCH
+    permissionGroup = 'root'
+    user = 'root'
+    fileMode = 0755
+    license = 'GPL'
+    vendor = 'Teraproc'
+    url = 'http://www.teraproc.com/'
+    summary = 'Jaguar server and client programs'
+    packageDescription = 'Autoscalling engine for slider-managed long running services in yarn cluster'
+
+    from(jar.outputs.files) {
+        into 'lib'
+    }
+    from('libs') {
+        into 'lib'
+    }
+    from("$buildDir/scripts") {
+        into "bin"
+    }
+    from("$buildDir/conf") {
+        into "conf"
+    }
+    from("$buildDir/docs") {
+        into "docs"
+    }
+}
+
+buildRpm {
+    packageName = baseName
+    into '/opt/' + packageName + '-' + version
+}
+
+buildDeb {
+    packageName = baseName
+    into '/opt/' + packageName + '-' + version
 }
 
 checkstyleMain {
