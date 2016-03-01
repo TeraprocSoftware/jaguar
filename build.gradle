@@ -147,7 +147,7 @@ ospackage {
     permissionGroup = 'root'
     user = 'root'
     fileMode = 0755
-    license = 'GPL'
+    license = 'http://www.apache.org/licenses/LICENSE-2.0'
     vendor = 'Teraproc'
     url = 'http://www.teraproc.com/'
     summary = 'Jaguar server and client programs'
