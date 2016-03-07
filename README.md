@@ -3,6 +3,7 @@ Auto-scaler for slider-managed long running services in yarn cluster.
 
 ### Requirements ###
 * Hadoop 2.8+ and slider 0.91
+* Elasticsearch 2.2.0
 
 ### Build Jaguar###
 #### Options 1 ####
@@ -18,6 +19,22 @@ Auto-scaler for slider-managed long running services in yarn cluster.
 - cp slider-0.91.0-incubating-SNAPSHOT/lib/*.jar ./libs
 - run ./gradlew -PlocalJars clean build
 ```
+
+### Install Elasticsearch ###
+
+* Download and install elasticsearch rpm package.
+```
+sudo rpm -i elasticsearch-2.2.0.rpm
+```
+
+* Start elasticsearch service.
+```
+service elasticsearch start
+```
+
+* Elasticsearch conf directory: /etc/elasticsearch/
+* Elasticsearch data directory: /var/lib/elasticsearch/
+* Elasticsearch log directory: /var/log/elasticsearch/
 
 ### Install Jaguar ###
 ```
