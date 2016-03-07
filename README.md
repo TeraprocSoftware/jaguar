@@ -4,6 +4,8 @@ Auto-scaler for slider-managed long running services in yarn cluster.
 ### Requirements ###
 * Hadoop 2.8+ and slider 0.91
 * Elasticsearch 2.2.0
+* Postgresql 9.4
+* [hadoop-metrics-elasticsearch-sink](https://github.com/TeraprocSoftware/hadoop-metrics-elasticsearch-sink)
 
 ### Build Jaguar###
 #### Options 1 ####
@@ -35,6 +37,48 @@ service elasticsearch start
 * Elasticsearch conf directory: /etc/elasticsearch/
 * Elasticsearch data directory: /var/lib/elasticsearch/
 * Elasticsearch log directory: /var/log/elasticsearch/
+
+### Install Postgresql ###
+
+* Download and install postgresql rpm package.
+```
+sudo yum install -y http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-redhat94-9.4-1.noarch.rpm
+sudo yum install -y postgresql94-server postgresql94-contrib
+sudo service postgresql-9.4 initdb
+sudo chkconfig postgresql-9.4 on
+```
+
+* Start postgresql service.
+```
+sudo service postgresql-9.4 start
+```
+
+* Configure user postgres password by executing following commands.
+```
+sudo su - postgres
+$ psql
+postgres=# ALTER USER postgres WITH PASSWORD 'postgres';
+ALTER ROLE
+postgres=# \q
+$ exit
+```
+
+* Change authentication method to "md5" by editing configuration file "/var/lib/pgsql/9.4/data/pg_hba.conf"
+```
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+
+# "local" is for Unix domain socket connections only
+local   all             all                                     md5
+# IPv4 local connections:
+host    all             all             127.0.0.1/32            md5
+# IPv6 local connections:
+host    all             all             ::1/128                 md5
+```
+
+* Restart postgresql service.
+```
+sudo service postgresql-9.4 restart
+```
 
 ### Install Jaguar ###
 ```
