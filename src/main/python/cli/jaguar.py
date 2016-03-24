@@ -18,19 +18,17 @@ limitations under the License.
 '''
 
 import click
-import ConfigParser
-from os.path import join
-from os.path import expanduser
 from getpass import getuser
+from utils import parse_conf_dir
+from utils import dir_must_exist
 
 class Config(object):
-    def __init__(self, server_url, server_host, server_port, user, verbose):
-        self.server_url = server_url
-        self.server_host = server_host
-        self.server_port = server_port
+    def __init__(self, server, conf, user, verbose):
+        self.server = dict()
+        self.server['name'] = server
+        self.conf = conf
         self.user = user
         self.verbose = verbose
-
 
 @click.group()
 @click.option('--server', envvar='JAGUAR_SERVER', default='',
@@ -48,33 +46,7 @@ class Config(object):
 @click.pass_context
 def jaguar(ctx, server, conf, verbose):
     """The Jaguar CLI"""
-
-    if not server and not conf:
-        raise click.UsageError('Neither Jaguar server nor Jaguar '
-                               'configuration directory is specified.')
-
-    if not server:
-        config = ConfigParser.RawConfigParser()
-        name = expanduser(join(conf, 'jaguar.conf'))
-        files = config.read(name)
-        if len(files) > 0:
-            try:
-                server = config.get('client', 'server')
-            except ConfigParser.Error:
-                raise click.BadParameter('Failed to get Jaguar server from '
-                                         'configuration file: ' + name)
-        else:
-            raise click.FileError(name, 'Check if the file exists.')
-
-    server_url_parts = server.split(':')
-    if len(server_url_parts) != 2:
-        raise click.BadParameter('Wrong Jaguar server format: ' + server +
-                                 '. Jaguar server must be a URL in the format of '
-                                 ' host:port.')
-    server_url = 'http://' + server
-    server_host = server_url_parts[0]
-    server_port = server_url_parts[1]
+    conf = dir_must_exist(parse_conf_dir(conf))
     user = getuser()
-
-    ctx.obj = Config(server_url, server_host, server_port, user, verbose)
+    ctx.obj = Config(server, conf, user, verbose)
 

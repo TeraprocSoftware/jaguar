@@ -15,7 +15,13 @@
             <MaxFileSize>10MB</MaxFileSize>
         </triggeringPolicy>
     </appender>
-
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- encoders are assigned the type
+             ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
+        <encoder>
+            <pattern>%date{ISO8601} %-5level %logger{0}: %msg%n</pattern>
+        </encoder>
+    </appender>
     <appender name="SIFT" class="ch.qos.logback.classic.sift.SiftingAppender">
         <discriminator>
             <key>serviceId</key>
@@ -39,29 +45,11 @@
         </sift>
     </appender>
 
-    <logger name="com.teraproc" level="INFO" additivity="false">
-        <appender-ref ref="FILE"/>
-    </logger>
     <logger name="EVENT_LOGGER" level="INFO" additivity="false">
         <appender-ref ref="SIFT"/>
     </logger>
-    <logger name="org.hibernate.type" level="WARN">
-        <appender-ref ref="FILE"/>
-    </logger>
-    <logger name="org.hibernate" level="WARN">
-        <appender-ref ref="FILE"/>
-    </logger>
-    <logger name="org.hibernate.SQL" level="WARN">
-        <appender-ref ref="FILE"/>
-    </logger>
-    <logger name="sql-log" level="WARN">
-        <appender-ref ref="FILE"/>
-    </logger>
-    <logger name="org.hibernate.type.descriptor.sql.BasicBinder">
-        <level value="WARN"/>
-    </logger>
     <root level="INFO">
-        <appender-ref ref="FILE"/>
+        <appender-ref ref="${LOG_APPENDER:-STDOUT}"/>
     </root>
 
 </configuration>

@@ -24,6 +24,7 @@ from rest import Rest
 from error import RestError
 from utils import display
 from utils import quit
+from utils import parse_server
 import json
 import requests
 
@@ -31,7 +32,7 @@ import requests
 @click.pass_obj
 def application(config):
     """Jaguar application operations."""
-    pass
+    parse_server(config)
 
 @application.command()
 @click.option('--id', default=0,
@@ -49,9 +50,9 @@ def list(config, id):
     """
     try:
         if id > 0:
-            url = config.server_url + '/v1/applications/' + str(id)
+            url = config.server['url'] + '/v1/applications/' + str(id)
         else:
-            url = config.server_url + '/v1/applications'
+            url = config.server['url'] + '/v1/applications'
         headers = {'username':config.user}
         rest = Rest(url, headers)
         display(rest.get())
@@ -69,7 +70,7 @@ def list(config, id):
 def update(config, id, enable):
     """Update an application"""
     try:
-        url = config.server_url + '/v1/applications/' + str(id)
+        url = config.server['url'] + '/v1/applications/' + str(id)
         headers = {'username':config.user, 'Content-Type':'application/json'}
         rest = Rest(url, headers)
         # check if the application exists
@@ -101,7 +102,7 @@ def update(config, id, enable):
 def register(config, name, provider, enable):
     """Register an application for monitor and evaluation."""
     try:
-        url = config.server_url + '/v1/applications'
+        url = config.server['url'] + '/v1/applications'
         headers = {'username':config.user, 'Content-Type':'application/json'}
         data = json.dumps({'name':name, 'provider':provider, 'enabled':enable})
         rest = Rest(url, headers, data)
@@ -123,7 +124,7 @@ def abort_if_false(ctx, param, value):
 def unregister(config, id):
     """Unregister an application."""
     try:
-        url = config.server_url + '/v1/applications/' + str(id)
+        url = config.server['url'] + '/v1/applications/' + str(id)
         headers = {'username':config.user}
         rest = Rest(url, headers)
         display(rest.delete())

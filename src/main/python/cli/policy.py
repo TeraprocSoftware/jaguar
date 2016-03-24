@@ -24,12 +24,13 @@ from error import RestError
 from utils import display
 from utils import quit
 from utils import is_json
+from utils import parse_server
 
 @jaguar.group()
 @click.pass_obj
 def policy(config):
     """Jaguar policy operations."""
-    pass
+    parse_server(config)
 
 @policy.command()
 @click.argument('app-id', type=click.INT, metavar='<APP_ID>')
@@ -55,7 +56,7 @@ def list(config, app_id, id, type):
         $ jaguar policy list 50 --type instance --id 101
     """
     try:
-        url = config.server_url + '/v1/applications/' \
+        url = config.server['url'] + '/v1/applications/' \
               + str(app_id) + '/policies/'
         if type:
             url += type + '/'
@@ -89,7 +90,7 @@ def create(config, app_id, type, file):
         if not is_json(data):
             raise click.BadParameter('The policy file ' + file.name \
                                      + ' is not a valid json file.')
-        url = config.server_url + '/v1/applications/' + str(app_id) \
+        url = config.server['url'] + '/v1/applications/' + str(app_id) \
               + '/policies/' + type
         headers = {'username':config.user, 'Content-Type':'application/json'}
         rest = Rest(url, headers, data)
@@ -117,7 +118,7 @@ def update(config, app_id, type, id, file):
         if not is_json(data):
             raise click.BadParameter('The policy file ' + file.name \
                                      + ' is not a valid json file.')
-        url = config.server_url + '/v1/applications/' + str(app_id) \
+        url = config.server['url'] + '/v1/applications/' + str(app_id) \
               + '/policies/' + type + '/' + str(id)
         headers = {'username':config.user, 'Content-Type':'application/json'}
         rest = Rest(url, headers, data)
@@ -144,7 +145,7 @@ def delete(config, app_id, type, id):
     """Delete an application policy.
     """
     try:
-        url = config.server_url + '/v1/applications/' + str(app_id) \
+        url = config.server['url'] + '/v1/applications/' + str(app_id) \
               + '/policies/' + type + '/' + str(id)
         headers = {'username':config.user, 'Content-Type':'application/json'}
         rest = Rest(url, headers)

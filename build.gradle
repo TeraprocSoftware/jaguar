@@ -96,18 +96,6 @@ startScripts {
     }
 }
 
-task createSbin {
-    def sbin = file("$buildDir/sbin")
-    outputs.dir sbin
-    doLast {
-        sbin.mkdirs()
-        copy {
-            from "src/main/resources/bin"
-            into "$buildDir/sbin"
-        }
-    }
-}
-
 task createDocs {
     def docs = file("$buildDir/docs")
     outputs.dir docs
@@ -142,9 +130,6 @@ distributions {
             from("$buildDir/scripts") {
                 into "bin"
             }
-            from(createSbin) {
-                into "sbin"
-            }
             from(createConf) {
                 into "conf"
             }
@@ -176,9 +161,6 @@ ospackage {
     }
     from("$buildDir/scripts") {
         into "bin"
-    }
-    from("$buildDir/sbin") {
-        into "sbin"
     }
     from("$buildDir/conf") {
         into "conf"
