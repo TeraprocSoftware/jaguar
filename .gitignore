@@ -20,7 +20,6 @@
 .*.swp
 atlassian*
 userdatas/
-jaguar.conf
 run_db.sh
 run_jaguar.sh
 
