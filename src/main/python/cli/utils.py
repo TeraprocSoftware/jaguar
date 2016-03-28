@@ -55,7 +55,7 @@ def daemonize():
             # Parent
             _exit(0)
     except OSError as e:
-        quit("Unable to fork, errno: {}.".format(e.errno))
+        quit("Unable to fork, errno: {0}.".format(e.errno))
     # This is the child process. Continue.
     # Become group leader
     if setsid() == -1:
@@ -115,7 +115,7 @@ def execute_envsh(confDir):
 
 def dir_must_exist(dirname):
     if not exists(dirname):
-        raise click.UsageError('Directory {} does not exist.'.format(dirname))
+        raise click.UsageError('Directory {0} does not exist.'.format(dirname))
     return dirname
 
 def parse_conf_dir(conf):

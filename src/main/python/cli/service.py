@@ -42,9 +42,9 @@ ON_POSIX = 'posix' in sys.builtin_module_names
 JAGUAR_HOME = "JAGUAR_HOME"
 JAGUAR_CLASSNAME = "com.teraproc.jaguar.JaguarApplication"
 JAGUAR_PROPERTIES = "jaguar.properties"
-JAGUAR_CONF_ARGS = "--spring.config.location={}"
+JAGUAR_CONF_ARGS = "--spring.config.location={0}"
 JAGUAR_LOGBACK = "logback.xml"
-JAGUAR_LOG_ARGS = "--logging.config={}"
+JAGUAR_LOG_ARGS = "--logging.config={0}"
 DEFAULT_JVM_OPTS = "-Djava.net.preferIPv4Stack=true -Xmx2048m"
 
 finished = False
@@ -155,13 +155,13 @@ def status(config):
 
     $ jaguar service status
     """
-    statusCmd = 'jps -l | grep {}'.format(JAGUAR_CLASSNAME)
+    statusCmd = 'jps -l | grep {0}'.format(JAGUAR_CLASSNAME)
     command = ['bash', '-c', statusCmd]
-    debug ("Executing: {}".format(command))
+    debug ("Executing: {0}".format(command))
     try:
         subprocess.check_call(command, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError:
-        click.echo('No Java process {} is found.'.format(JAGUAR_CLASSNAME),
+        click.echo('No Java process {0} is found.'.format(JAGUAR_CLASSNAME),
                    err=True)
 
 
@@ -174,9 +174,9 @@ def stop(config):
 
     $ jaguar service stop
     """
-    statusCmd = 'jps -l | grep {}'.format(JAGUAR_CLASSNAME)
+    statusCmd = 'jps -l | grep {0}'.format(JAGUAR_CLASSNAME)
     command = ['bash', '-c', statusCmd]
-    debug ("Executing: {}".format(command))
+    debug ("Executing: {0}".format(command))
     try:
         output = subprocess.check_output(command, stderr=subprocess.STDOUT)
         pid = int(output.split()[0])
@@ -190,9 +190,9 @@ def stop(config):
         else:
             click.echo("Jaguar service has been stopped successfully.")
     except subprocess.CalledProcessError as e:
-        click.echo('No Java process {} is found.'.format(JAGUAR_CLASSNAME),
+        click.echo('No Java process {0} is found.'.format(JAGUAR_CLASSNAME),
                    err=True)
     except ValueError:
-        click.echo('Failed to convert {} into integer.'.format(pid),
+        click.echo('Failed to convert {0} into integer.'.format(pid),
                    err=True)
 
