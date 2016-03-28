@@ -27,6 +27,7 @@ from os import environ
 from os import kill
 from threading import Thread
 from jaguar import jaguar
+from utils import check_output
 from utils import daemonize
 from utils import execute_envsh
 from utils import dir_must_exist
@@ -164,7 +165,6 @@ def status(config):
         click.echo('No Java process {0} is found.'.format(JAGUAR_CLASSNAME),
                    err=True)
 
-
 @service.command()
 @click.pass_obj
 def stop(config):
@@ -178,7 +178,7 @@ def stop(config):
     command = ['bash', '-c', statusCmd]
     debug ("Executing: {0}".format(command))
     try:
-        output = subprocess.check_output(command, stderr=subprocess.STDOUT)
+        output = check_output(command, stderr=subprocess.STDOUT)
         pid = int(output.split()[0])
         r = 0
         while pid_exists(pid) and r < 10:
@@ -189,7 +189,7 @@ def stop(config):
             click.echo("Failed to stop Jaguar service.")
         else:
             click.echo("Jaguar service has been stopped successfully.")
-    except subprocess.CalledProcessError as e:
+    except subprocess.CalledProcessError:
         click.echo('No Java process {0} is found.'.format(JAGUAR_CLASSNAME),
                    err=True)
     except ValueError:

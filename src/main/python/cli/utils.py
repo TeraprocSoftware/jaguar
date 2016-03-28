@@ -31,7 +31,6 @@ from os import X_OK
 from os import pathsep
 from os import fork
 from os import setsid
-from os import _exit
 from os import close
 from os import open
 from os import dup2
@@ -49,11 +48,29 @@ ENV_KEYS = ["JAVA_HOME", "JAGUAR_HOME", "JAGUAR_CONF_DIR"]
 JAGUAR_HOME = "JAGUAR_HOME"
 JAGUAR_CONF_DIR = "JAGUAR_CONF_DIR"
 
+def check_output(*popenargs, **kwargs):
+    r"""Run command with arguments and return its output as a byte string.
+    Backported from Python 2.7 as it's implemented as pure python on stdlib.
+    >>> check_output(['/usr/bin/python', '--version'])
+    Python 2.6.2
+    """
+    process = subprocess.Popen(stdout=subprocess.PIPE, *popenargs, **kwargs)
+    output, unused_err = process.communicate()
+    retcode = process.poll()
+    if retcode:
+        cmd = kwargs.get("args")
+        if cmd is None:
+            cmd = popenargs[0]
+        error = subprocess.CalledProcessError(retcode, cmd)
+        error.output = output
+        raise error
+    return output
+
 def daemonize():
     try:
         if fork() != 0:
             # Parent
-            _exit(0)
+            exit(0)
     except OSError as e:
         quit("Unable to fork, errno: {0}.".format(e.errno))
     # This is the child process. Continue.
