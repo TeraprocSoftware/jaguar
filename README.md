@@ -117,7 +117,20 @@ metrics.elasticsearch.url=http://localhost:9200
 jaguar_server=localhost:9000
 ```
 
+### Install Jaguar CLI ###
+#### Requirements ####
+* You must have ```pip``` installed first before installing the Jaguar CLI. Follow https://pip.pypa.io/en/stable/installing/ to install ```pip``` if it is not yet installed in your system.
+
+#### Installation ####
+* To install the CLI, simply run the following as ```root```. This will install a ```jaguar``` shell script under ```/usr/local/bin/```.
+```
+$ cd JAGUAR_TOP/conf
+$ pip install --upgrade setuptools
+$ pip install -e .
+```
+
+#### Using Jaguar CLI####
+* Run ```jaguar --help``` or ```jaguar COMMAND --help``` for detailed information on how to use Jaguar CLI.
+
 ### Start Jaguar Server ###
-```
-${JAGUAR_HOME}/sbin/jaguar-daemon.sh start
-```
+* Run ```jaguar service start``` for console mode or ```jaguar service start --daemon``` for daemon mode.
