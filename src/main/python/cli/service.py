@@ -35,6 +35,7 @@ from utils import which
 from utils import out
 from utils import flush
 from utils import pid_exists
+from utils import parse_conf
 from utils import quit
 
 DEBUG = False
@@ -47,6 +48,7 @@ JAGUAR_CONF_ARGS = "--spring.config.location={0}"
 JAGUAR_LOGBACK = "logback.xml"
 JAGUAR_LOG_ARGS = "--logging.config={0}"
 DEFAULT_JVM_OPTS = "-Djava.net.preferIPv4Stack=true -Xmx2048m"
+JAGUAR_PORT_ARGS = "--server.port={0}"
 
 finished = False
 
@@ -93,7 +95,10 @@ def run(commandline):
 @click.pass_obj
 def service(config):
     """Jaguar service operations."""
-    pass
+    try:
+        parse_conf(config)
+    except:
+        config.server['port'] = '8080'
 
 @service.command()
 @click.option('--daemon/--no-daemon', default=False,
@@ -128,6 +133,8 @@ def start(config, daemon):
     # Jaguar log
     logback = join(config.conf, JAGUAR_LOGBACK)
     args.extend(JAGUAR_LOG_ARGS.format(logback).split())
+    # Jaguar port
+    args.extend(JAGUAR_PORT_ARGS.format(config.server['port']).split())
     # Jaguar classpath
     classpath = join(environ.get(JAGUAR_HOME), 'lib', '*')
     jvm_opts_list = DEFAULT_JVM_OPTS.split()

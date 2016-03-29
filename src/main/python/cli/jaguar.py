@@ -25,7 +25,7 @@ from utils import dir_must_exist
 class Config(object):
     def __init__(self, server, conf, user, verbose):
         self.server = dict()
-        self.server['name'] = server
+        self.server['endpoint'] = server
         self.conf = conf
         self.user = user
         self.verbose = verbose

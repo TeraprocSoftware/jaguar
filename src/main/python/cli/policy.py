@@ -24,13 +24,13 @@ from error import RestError
 from utils import display
 from utils import quit
 from utils import is_json
-from utils import parse_server
+from utils import parse_conf
 
 @jaguar.group()
 @click.pass_obj
 def policy(config):
     """Jaguar policy operations."""
-    parse_server(config)
+    parse_conf(config)
 
 @policy.command()
 @click.argument('app-id', type=click.INT, metavar='<APP_ID>')

@@ -24,7 +24,7 @@ from rest import Rest
 from error import RestError
 from utils import display
 from utils import quit
-from utils import parse_server
+from utils import parse_conf
 import json
 import requests
 
@@ -32,7 +32,7 @@ import requests
 @click.pass_obj
 def application(config):
     """Jaguar application operations."""
-    parse_server(config)
+    parse_conf(config)
 
 @application.command()
 @click.option('--id', default=0,

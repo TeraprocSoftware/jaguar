@@ -21,6 +21,7 @@ import click
 import subprocess
 import json
 import ConfigParser
+import StringIO
 import resource
 from sys import stderr
 from sys import stdout
@@ -32,7 +33,6 @@ from os import pathsep
 from os import fork
 from os import setsid
 from os import close
-from os import open
 from os import dup2
 from os import O_RDWR
 from os import kill
@@ -85,7 +85,8 @@ def daemonize():
         except OSError:
             pass
     # Redirect 0, 1, 2 to /dev/null
-    devnull_fd = open("/dev/null", O_RDWR)
+    import os
+    devnull_fd = os.open("/dev/null", O_RDWR)
     dup2(devnull_fd, 0)
     dup2(devnull_fd, 1)
     dup2(devnull_fd, 2)
@@ -144,27 +145,33 @@ def parse_conf_dir(conf):
         raise click.UsageError('Jaguar configuration directory cannot be located.')
     return conf
 
-def parse_server(config):
-    server = config.server.get('name')
+def parse_conf(config):
+    endpoint = config.server.get('endpoint')
     conf = config.conf
-    if not server:
-        configParser = ConfigParser.RawConfigParser()
-        name = expanduser(join(conf, 'jaguar.conf'))
-        files = configParser.read(name)
-        if len(files) > 0:
-            try:
-                server = configParser.get('client', 'server')
-            except ConfigParser.Error:
-                raise click.BadParameter('Failed to get Jaguar server from '
-                                         'configuration file: ' + name)
+    if not endpoint:
+        conf_path = expanduser(join(conf, 'jaguar.conf'))
+        try:
+            conf_str = '[root]\n' + open(conf_path, 'r').read()
+        except IOError as e:
+            import errno
+            if e.errno == errno.EACCES:
+                raise click.FileError(conf_path, 'Check file permission.')
+            else:
+                raise click.FileError(conf_path, 'Check if the file exists.')
+        conf_fp = StringIO.StringIO(conf_str)
+        confs = ConfigParser.RawConfigParser()
+        confs.readfp(conf_fp)
+        if confs.has_option('root', 'server'):
+            endpoint = confs.get('root', 'server')
         else:
-            raise click.FileError(name, 'Check if the file exists.')
-    server_url_parts = server.split(':')
+            raise click.BadParameter('Failed to get Jaguar server from '
+                                     'configuration file: ' + conf_path)
+    server_url_parts = endpoint.split(':')
     if len(server_url_parts) != 2:
-        raise click.BadParameter('Wrong Jaguar server format: ' + server +
+        raise click.BadParameter('Wrong Jaguar server format: ' + endpoint +
                                  '. Jaguar server must be a URL in the format of '
                                  ' host:port.')
-    server_url = 'http://' + server
+    server_url = 'http://' + endpoint
     server_host = server_url_parts[0]
     server_port = server_url_parts[1]
     config.server['url'] = server_url
