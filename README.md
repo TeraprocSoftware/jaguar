@@ -2,8 +2,10 @@
 Auto-scaler for slider-managed long running services in yarn cluster.
 
 ### Requirements ###
-* Hadoop 2.8+ and slider 0.91
-* Elasticsearch 2.2.0
+* Java 1.7+
+* python and pip
+* Hadoop 2.8 and slider 0.91
+* Elasticsearch 1.7.3
 * Postgresql 9.4
 * [hadoop-metrics-elasticsearch-sink](https://github.com/TeraprocSoftware/hadoop-metrics-elasticsearch-sink)
 
@@ -26,7 +28,8 @@ Auto-scaler for slider-managed long running services in yarn cluster.
 
 * Download and install elasticsearch rpm package.
 ```
-sudo rpm -i elasticsearch-2.2.0.rpm
+sudo rpm -i elasticsearch-1.7.3.noarch.rpm
+sudo chkconfig --add elasticsearch
 ```
 
 * Start elasticsearch service.
@@ -82,7 +85,7 @@ sudo service postgresql-9.4 restart
 
 ### Install Jaguar ###
 ```
-sudo rpm -i jaguar-0.4.DEV-1.noarch.rpm
+sudo rpm -i jaguar-0.4.DEV.noarch.rpm
 ```
 
 ### Setup Environment ###
@@ -109,12 +112,12 @@ jaguar.db.name=postgres
 jaguar.db.user=postgres
 jaguar.db.pass=postgres
 jaguar.db.hbm2ddl.strategy=update
-metrics.elasticsearch.url=http://localhost:9200
+metrics.elasticsearch.url=http://${ES_HOST}:9200
 ```
 
 ####jaguar.conf####
 ```
-jaguar_server=localhost:9000
+server=localhost:9000
 ```
 
 ### Install Jaguar CLI ###
@@ -124,7 +127,7 @@ jaguar_server=localhost:9000
 #### Installation ####
 * To install the CLI, simply run the following as ```root```. This will install a ```jaguar``` shell script under ```/usr/local/bin/```.
 ```
-$ cd JAGUAR_TOP/conf
+$ cd $JAGUAR_HOME/bin
 $ pip install --upgrade setuptools
 $ pip install -e .
 ```
