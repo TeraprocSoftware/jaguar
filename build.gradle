@@ -141,7 +141,6 @@ distributions {
 }
 
 ospackage {
-    release = '1'
     os = LINUX
     arch = NOARCH
     permissionGroup = 'root'
