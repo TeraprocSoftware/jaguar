@@ -1,3 +1,19 @@
 dependencies {
-    compile fileTree(dir: 'libs', excludes: ['log4j*', 'slf4j-log4j*', 'servlet-api*', 'httpclient*', 'httpcore*'], include: ['*.jar'])
+    compile fileTree(dir: 'libs',
+            excludes: ['log4j*',
+                       'slf4j-log4j*',
+                       'slf4j-api-*',
+                       'servlet-api*',
+                       'httpclient*',
+                       'httpcore*',
+                       'asm*',
+                       'commons-codec*',
+                       'commons-lang*',
+                       'commons-logging-1.1.3*',
+                       'guava*',
+                       'jackson-annotations*',
+                       'jackson-core-*',
+                       'jackson-databind-*',
+                       'joda-time-*',],
+            include: ['*.jar'])
 }
